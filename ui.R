@@ -1,8 +1,19 @@
 library(shiny)
-library(shinythemes)
+library(shinyWidgets)
 
 ui <- function(){
-  #theme=shinytheme("flatly")
+  listSugar <- list("arabinose","cellobiose","fructose","fucose","galactose","glucose","inositol",
+                    "isomaltose","maltose","mannose","mannose_xylose","melbiose","melezitose","palatinose",
+                    "raffinose","rhammose","ribose","sucrose","trehalose","xylose")
+  listGlucosinolates<- list("x3mtp","x5mtp","x6msh","x7msh","x7mtp","x8mso","x8mtp","butyl",
+                            "epigallocatechin","epiprogoitrin","glucoalysiin","glucobrassicin","glucoerucin","gluconapin",
+                            "gluconasturtiin","glucoraphanin","glucoraphenin","glucosinalbin","hexyl","isobutyl",
+                            "neoglucabrassicin_peak2","neoglucoabrassicin_peak1","progoitrin","sinirgin")
+  listSecondaryMetabolites<- list("apigenin_rutinoside","caffeic_acid","chlorogenic_acid","citrat",
+                                  "cyanidin_rhamnoside","cyanidin_sophorosid_glucoside","dihydro_caffeoyl_glucuronide","fumarat",
+                                  "kaempherol_glucosyl_rhamnoside","kaempherol_rutinoside","kaempherol_xylosyl_rhamnoside","malat",
+                                  "m_coumaric_acid","pelargonidin_cumaroyl_diglucoside","pelargonidin_sambubioside","prenyl_narigenin",
+                                  "quercetin_glucoside","succinat")
   bootstrapPage('',
                 tags$style(type="text/css",
                            HTML('.navbar {background-color: #50C21B; font-size: 18px;}
@@ -21,7 +32,7 @@ ui <- function(){
                                                               br(),
                                                               p("NirsDB Application"),
                                                               fluidRow(actionButton("app", "Access the application"), align = "center"),
-                                                              img(src = "homepage.jpg", width = '100%', height = "auto")
+                                                              img(src = "plant.png", width = '100%', height = "auto")
                                                     )
                                     )
                                     )
@@ -39,19 +50,45 @@ ui <- function(){
                                                                  tableOutput("files")
                                                       ),
                                                       tabPanel("Consult Database",
-                                                               #INFOS GENERAL
-                                                               p(""),h4("General Informations"),fluidRow(column(width =6, selectInput("location",'Location',multiple=TRUE,choices=list("location1","location2"))),
-                                                               column(width =6,selectInput("exp",'Experimentation',multiple=TRUE,choices=list("location1","location2")))),
+                                                               #INFOS GENERAL###############
+                                                               p(""),h4("General Informations"),fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
-                                                               fluidRow(column(width =6,selectInput("contributor",'Contributor',multiple=TRUE,choices=list("location1","location2"))),
-                                                               column(width=6,dateRangeInput("date",'Dates')))),
-
+                                                               fluidRow(column(width =6,pickerInput("contributor",'Contributor',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width=6,dateRangeInput("date",'Dates'))),
+                                                               #INFOS SAMPLE###############
+                                                               p(""),h4("Sample Informations"),fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width =6,pickerInput("genetic_group",'Genetic group',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               ###2EME LIGNE
+                                                               fluidRow(column(width =6,pickerInput("condition",'Condition',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width=6,pickerInput("leaf_stage",'Leaf Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               ###3EME LIGNE
+                                                               fluidRow(column(width = 6,radioButtons("situation","Situation",choices =list("Indoor","Outdoor"))),
+                                                                        column(width = 6,radioButtons("leafAttach","Leaf Attachement",choices=list("Leaf Attached","Leaf Unattached")))),
+                                                               ###4EME LIGNE
+                                                               fluidRow(column(width =6,pickerInput("plant_stage",'Plant Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width=6,pickerInput("measurement",'Measurement',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               ###5EME LIGNE
+                                                               fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               #CSR OPTIONS###############
+                                                               p(""),h4("CSR Options"),fluidRow(column(width =6, pickerInput("csr_strategy",'CSR Strategy',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width =6,pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE)))),
+                                                               #OTHER OPTIONS#############
+                                                               p(""),h4("Other Options"),fluidRow(column(width =6, pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE))),
+                                                               column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))),
+                                                               ###2EME LIGNE
+                                                               fluidRow(column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,selected = listSecondaryMetabolites,options = list(`actions-box` = TRUE)))
+                                                               ),actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+                                                               ),
+                                                      
                                                       tabPanel("Become Contributor",
                                                                p(""),
                                                       ))
                                                       )
                                     ))
-                ))
+                ),
+                tabPanel("About"))
   )
+
 }
   
