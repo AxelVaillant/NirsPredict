@@ -47,7 +47,7 @@ ui <- function(){
                                                                  p(""),
                                                                  fileInput('spectrumfile','Upload CSV File',
                                                                            accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
-                                                                 tableOutput("files")
+                                                                 tableOutput("spectrum")
                                                       ),
                                                       tabPanel("Consult Database",
                                                                #INFOS GENERAL###############
@@ -63,8 +63,8 @@ ui <- function(){
                                                                fluidRow(column(width =6,pickerInput("condition",'Condition',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width=6,pickerInput("leaf_stage",'Leaf Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###3EME LIGNE
-                                                               fluidRow(column(width = 6,radioButtons("situation","Situation",choices =list("Indoor","Outdoor"))),
-                                                                        column(width = 6,radioButtons("leafAttach","Leaf Attachement",choices=list("Leaf Attached","Leaf Unattached")))),
+                                                               fluidRow(column(width = 6,radioButtons("situation","Situation",choices =list("Both","Indoor","Outdoor"))),
+                                                                        column(width = 6,radioButtons("leafAttach","Leaf Attachement",choices=list("Both","attached","detached")))),
                                                                ###4EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("plant_stage",'Plant Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width=6,pickerInput("measurement",'Measurement',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
@@ -76,10 +76,12 @@ ui <- function(){
                                                                #OTHER OPTIONS#############
                                                                p(""),h4("Other Options"),fluidRow(column(width =6, pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))),
-                                                               ###2EME LIGNE
+                                                               ##2EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,selected = listSecondaryMetabolites,options = list(`actions-box` = TRUE)))
-                                                               ),actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
                                                                ),
+                                                               #FORMAT##################
+                                                               p(""),h4("Output"),fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
+                                                                                           column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4")))),
                                                       
                                                       tabPanel("Become Contributor",
                                                                p(""),
