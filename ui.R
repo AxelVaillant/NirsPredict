@@ -44,20 +44,20 @@ ui <- function(){
                                       fluidRow(column(width =4,
                                                       tabsetPanel(
                                                         tabPanel("Submit Spectrum",
-                                                                 p(""),
+                                                                 p(""),wellPanel(
                                                                  fileInput('spectrumfile','Upload CSV File',
                                                                            accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
-                                                                 tableOutput("spectrum")
+                                                                 tableOutput("spectrum"))
                                                       ),
                                                       tabPanel("Consult Database",
                                                                #INFOS GENERAL###############
-                                                               p(""),h4("General Informations"),fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               p(""),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("contributor",'Contributor',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width=6,dateRangeInput("date",'Dates'))),
+                                                               column(width=6,dateRangeInput("date",'Dates')))),
                                                                #INFOS SAMPLE###############
-                                                               p(""),h4("Sample Informations"),fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               p(""),h4("Sample Informations"),wellPanel(fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("genetic_group",'Genetic group',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("condition",'Condition',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
@@ -69,24 +69,24 @@ ui <- function(){
                                                                fluidRow(column(width =6,pickerInput("plant_stage",'Plant Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width=6,pickerInput("measurement",'Measurement',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###5EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
-                                                               #CSR OPTIONS###############
-                                                               p(""),h4("CSR Options"),fluidRow(column(width =6, pickerInput("csr_strategy",'CSR Strategy',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width =6,pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE)))),
+                                                               fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))))),
                                                                #OTHER OPTIONS#############
-                                                               p(""),h4("Other Options"),fluidRow(column(width =6, pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE))),
-                                                               column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))),
+                                                               p(""),h4("Other Options"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
+                                                               column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
                                                                ##2EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,selected = listSecondaryMetabolites,options = list(`actions-box` = TRUE)))
-                                                               ),
+                                                               fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
+                                                               ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,selected = listSecondaryMetabolites,options = list(`actions-box` = TRUE))))),
                                                                #FORMAT##################
-                                                               p(""),h4("Output"),fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
-                                                                                           column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4")))),
+                                                               p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
+                                                                                           column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
+                                                                                           fluidRow(span(textOutput('resText'),style="color:red;text-align:center;")))),
                                                       
                                                       tabPanel("Become Contributor",
                                                                p(""),
                                                       ))
-                                                      )
+                                                      ),
+                                               column(width=7,plotOutput('MeanPlot',height=700))
+                                               
                                     ))
                 ),
                 tabPanel("About"))

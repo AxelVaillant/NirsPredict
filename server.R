@@ -135,13 +135,22 @@ server <- function(input,output,session ){
     Fumarat , KaempherolGlucosylRhamnosylGlucoside , KaempherolRutinoside , KaempherolXylosylRhamnoside , malat , mcourmaricacid , pcoumaricacid ,
     pelargonidincumaroyldiglucoside , pelargonidinsambubioside , prenylnaringenin , quercetinglucoside , succinat,maltose"
     
-    #SpectrumOnlyQuery
-    spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
-                   filterList1," ORDER BY individual_id" )
-    #ParametersOnlyQuery
-    ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
-                              filterList1,"ORDER BY individual_id" )
-    
+    if(filterList1==""){
+      #SpectrumOnlyQuery
+      spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
+                                filterList1," ORDER BY individual_id" )
+      #ParametersOnlyQuery
+      ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
+                                  filterList1,"ORDER BY individual_id" )
+    } else {
+      #SpectrumOnlyQuery
+      spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
+                                filterList1," ORDER BY individual_id" )
+      #ParametersOnlyQuery
+      ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
+                                  filterList1,"ORDER BY individual_id" )
+    }
+    newtab= data.frame()
     ###########WRITING CSV OUTPUT#######################
     if(input$outputformat=="All Data"){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
@@ -150,15 +159,30 @@ server <- function(input,output,session ){
       write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
       write.table(paramsOnlyRes,file="paramsOnlyRes.csv",sep = ";",row.names = FALSE)
       allDataRes <- cbind(paramsOnlyRes[2:97],newtab[2:2152])
+      output$resText<-renderText({
+        if(is.na(res[1,1])){
+          return("Your filters don't match any spectrums in the database.")
+        } else{return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))}
+      })
       write.table(allDataRes,file="allDataRes.csv",sep = ";",row.names = FALSE)
     }
     if(input$outputformat=="Spectrum only"){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       newtab <-FormatData(res)
+      output$resText<-renderText({
+        if(is.na(res[1,1])){
+          return("Your filters don't match any spectrums in the database.")
+        } else{return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))}
+      })
       write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
     }
     if(input$outputformat=="Phenotypic traits only"){
       paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
+      output$resText<-renderText({
+        if(is.na(paramsOnlyRes[1,1])){
+          return("Your filters don't match any spectrums in the database.")
+        } else{return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))}
+      })
       write.table(paramsOnlyRes,file="paramsOnlyRes.csv",sep = ";",row.names = FALSE)
     }
     
@@ -183,32 +207,50 @@ server <- function(input,output,session ){
        colnames(sub2)[1] <- "Id"
        start<-start+2151
        end<-end+2151
-       newtab<- rbind(newtab, sub2)
+       newtab<-rbind(newtab,sub2)
        print(i)
      }
      return (newtab)
    }
   
-  ######UNIVARIATE GRAPHICAL OUTPUT#############
-  normSpectrum=data.frame()
-  normSpectrum <- as.data.frame(matrix(double(),ncol = 2))
-  for(i in 350:2500){
-    val<-paste('x',i,sep = "")
-    abs<-newtab[,val]
-    row<-as.data.frame(cbind(mean(as.numeric(abs)),i))
-    normSpectrum<- rbind(normSpectrum, row)
-  }
-  colnames(normSpectrum)[1] <- "Abs"
-  colnames(normSpectrum)[2] <- "Wavelength"
   
-  graph1<-normSpectrum[,c("Abs","Wavelength")]
-  plot(x = normSpectrum$Wavelength, y = normSpectrum$Abs,
-       xlab = "Wavelength",
-       ylab = "Asorption",
-       xlim = c(350, 2500),
-       ylim = c(0, 1.25),         
-       main = "Wavelength vs Absorption",col=3
-  )
+  plotMean<-function(newtab){
+    allSpectrum<-read.table(file = "allSpectrum.csv",header = TRUE,sep = ";")
+    newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
+    selecSpectrum <- as.data.frame(matrix(double(),ncol = 2))
+    for(i in 350:2500){
+      val<-paste('x',i,sep = "")
+      absSelec<-newtab[,val]
+      rowsel<-as.data.frame(cbind(mean(as.numeric(absSelec)),i))
+      selecSpectrum<- rbind(selecSpectrum, rowsel)
+    }
+    
+    absSelec<-selecSpectrum[,1]
+    absAll<-allSpectrum[,1]
+    c=data.frame(absSelec)
+    for(j in 1:length(absAll)){
+      c<-rbind(c,absAll[j])
+    }
+    wavelength=c(350:2500)
+    c<-cbind(c,wavelength)
+    name<-as.factor(rep(c("Individual","All"),each=2151))
+    rdyToPlot<-data.frame(c,name)
+    write.table(rdyToPlot,file="rdyToPlot.csv",sep=";",row.names = FALSE)
+    #####PLOT######
+    plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1),
+         main="Mean comparison",xlab="Wavelength",ylab="Absorption")
+    points(rdyToPlot[rdyToPlot$name=="All","wavelength"], rdyToPlot[rdyToPlot$name=="All","absSelec"], col="dodgerblue3", type="l", lwd=3,lty=3)
+    legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
+  }
+  observeEvent(input$submit, {
+  ######UNIVARIATE GRAPHICAL OUTPUT#############
+    # mean plot
+    output$MeanPlot <- renderPlot({
+      plotMean(newtab)
+    })
+    
+  })
+  
   
   ###OPTIONS
   options(encoding = "UTF-8")
@@ -232,7 +274,7 @@ server <- function(input,output,session ){
   
   
   #######OUTPUTS##########
-  
+
   
   #access to the app from the homepage link
   observeEvent(input$app, updateTabsetPanel(session = session, inputId = "tabset", selected = "app"))
