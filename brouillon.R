@@ -52,15 +52,13 @@ observeEvent(input$submit, {
 })
 
 
-
+#####BASIC LOOP#####
 FormatData<- function(res){
   newtab=data.frame()
   newtab <- as.data.frame(matrix(double(),ncol = 2152))
   names(newtab)[2:2152] <- paste0('x', 350:2500)
   colnames(newtab)[1] <- "Id"
   
-  start<-1
-  end<-2151
   for(i in 1:(nrow(res)/2151)){
     id<-res[start,4]
     sub<-t(res[start:end,3])
@@ -74,6 +72,33 @@ FormatData<- function(res){
   }
   return (newtab)
 }
+#####FASTER LOOP######
+start<-1
+end<-2151
+n<-(nrow(res)/2151)
+newtab=data.frame()
+newtab <- as.data.frame(matrix(double(),ncol = 2152))
+names(newtab)[2:2152] <- paste0('x', 350:2500)
+colnames(newtab)[1] <- "Id"
+rep<-replicate(n,loop(),simplify = TRUE)
+rep[-1,]<-as.numeric(rep[-1,])
+rep<-as.data.frame(rep)
+blabla<-as.data.frame(t(rep))
+
+blabla<-data.frame(lapply(blabla, as.character), stringsAsFactors=FALSE)
+
+loop<-function(){
+  id<-res[start,4]
+  sub<-t(as.numeric(res[start:end,3]))
+  sub2<-as.data.frame(cbind(id,sub))
+  names(sub2)[2:2152] <- paste0('x', 350:2500)
+  colnames(sub2)[1] <- "id"
+  start<<-start+2151
+  end<<-end+2151
+  newtab<- rbind(newtab, sub2)
+}
+
+
 newtab<-FormatData(res)
 
 ######UNIVARIATE GRAPHICAL OUTPUT#############
@@ -144,3 +169,119 @@ spectrumPlot<-ggplot(df1,aes(a,b,color=group1))+geom_point()+
   theme(legend.position=c(0,1),legend.justification=c(0,1))
 
 spectrumPlot
+
+############
+plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1),
+     main="Mean comparison",xlab="Wavelength",ylab="Absorption")
+points(rdyToPlot[rdyToPlot$name=="All","wavelength"], rdyToPlot[rdyToPlot$name=="All","absSelec"], col="dodgerblue3", type="l", lwd=3,lty=3)
+legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
+
+#############ACP######################
+res<-read.table(file = "resAll.csv",header = TRUE,sep = ";")
+newtab=data.frame()
+newtab <- as.data.frame(matrix(double(),ncol = 2152))
+names(newtab)[2:2152] <- paste0('x', 350:2500)
+colnames(newtab)[1] <- "Id"
+
+start<-1
+end<-2151
+for(i in 1:(nrow(res)/2151)){
+  id<-res[start,4]
+  sub<-t(res[start:end,3])
+  sub2<-as.data.frame(cbind(id,sub))
+  names(sub2)[2:2152] <- paste0('x', 350:2500)
+  colnames(sub2)[1] <- "Id"
+  start<-start+2151
+  end<-end+2151
+  newtab<-rbind(newtab,sub2)
+  print(i)
+}
+
+allSpectrum <- as.data.frame(matrix(double(),ncol = 2))
+for(i in 350:2500){
+  val<-paste('x',i,sep = "")
+  absSelec<-newtabAll[,val]
+  rowsel<-as.data.frame(cbind(mean(as.numeric(absSelec)),i))
+ allSpectrum<- rbind(allSpectrum, rowsel)
+}
+write.table(allSpectrum,"allSpectrum.csv",row.names = FALSE,sep=";")
+write.table(newtabAll,"newtabAll.csv",row.names = FALSE,sep=";")
+
+head(iris)
+head(newtab)
+
+head(ToothGrowth)
+allDataRes<-read.table(file = "allDataRes.csv",header = TRUE,sep = ";")
+library(ggplot2)
+library(FactoMineR)
+library(factoextra)
+DfComplet2<-read.csv(file = "6-NIRS_Metadata_Fit.csv",header = TRUE,sep = ";")
+DfComplet3<-read.table(file = "allSpectra.csv",header = TRUE,sep = ";")
+
+boxplot(allDataRes$csr_c, xlim = c(0.5, 1.5), main = parse(text = "test"),
+        outline = FALSE, col = "grey75",
+        ylim = c(0,100))
+
+pca = prcomp(allDataRes)
+pca=prcomp(iris[,1:4])
+plot(pca)
+allDataRes[,cbind(allDataRes$plant_stage,allDataRes[,97:2247])]
+plca=prcomp(allDataRes[,1:2247])
+
+PCA(df,scale.unit = TRUE,ncp=5,graph=TRUE)
+df<-cbind(DfComplet$plant_stage,DfComplet[,97:2247])
+df<-allDataRes[,97:2247]
+
+df1<-cbind(DfComplet$Plant_Stage,DfComplet[129:2279])
+df2<-newtabAll[,2:2152]
+AllDataPca<-PCA(df2,scale.unit = TRUE,ncp=5,graph=TRUE)
+
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = Phen$Plant_Stage,addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = Phen$Leaf_Status,addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = Phen$Treatment,addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = Phen$Genetic_group,addEllipses = FALSE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10,11))
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = Phen$Condition,addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10,11))
+
+pca_res<-prcomp(df2,scale. = TRUE)   
+df<-df[,2:2152]
+pca_res2<-prcomp(df,scale. = TRUE)
+plot(pca_res$x,col="firebrick3")
+points(pca_res2$x,col='dodgerblue3')
+
+write.table(Phen,file="phenAll.csv",sep=";",row.names = FALSE)
+
+phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
+AllDataPca<-PCA(newtabAll[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
+summary(AllDataPca)
+
+newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
+params<-read.table(file="paramsOnlyRes.csv",header=TRUE,sep=";")
+SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
+fviz_pca_ind(SelectedDataPca,gemo.ind="point",label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )
+
+fviz_eig(AllDataPca, addlabels = TRUE, ylim = c(0, 50))
+fviz_eig(SelectedDataPca, addlabels = TRUE, ylim = c(0, 60))
+
+fviz_pca_var(AllDataPca, col.var = "black")
+fviz_pca_var(SelectedDataPca, col.var = "black")
+
+
+newtabAll<-read.table(file="newtabAll.csv",header=TRUE,sep=";")
+phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
+AllDataPca<-PCA(newtabAll[,2:2152],scale.unit = TRUE,ncp=5,graph=FALSE)
+fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")
+
+fast.prcomp(newtabAll[,2:2152])
+write.infile(AllDataPca,file="OutputFile.csv")
+importedPCA<-read.csv(file = "OutputFile.csv",sep = ";",header = TRUE)
+points(x, y, pch = 16, cex = .2, col = rgb(0, 0, 0, alpha = .3))
+plot(AllDataPca,axes=c(1,2),choix = c("ind","var","varcor"))
+
+
+####ADE4TEST####
+library(ade4)
+spectre<-newtabAll[,2:2152]
+res.pca<- dudi.pca(newtabAll[,2:2152],nf=5,scannf=FALSE)
+system.time(res.pca<- dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE))
+system.time(AllDataPca<-PCA(spectre,scale.unit = TRUE,ncp=5,graph=FALSE))

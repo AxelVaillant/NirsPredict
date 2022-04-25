@@ -1,6 +1,10 @@
 library(shiny)
 library(RPostgreSQL)
 library(RPostgres)
+library(ggplot2)
+library(FactoMineR)
+library(factoextra)
+library(ade4)
 server <- function(input,output,session ){
   
   ############# ####DATABASE MANAGER##########################
@@ -34,8 +38,9 @@ server <- function(input,output,session ){
       listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
                          "measurement","plant_stage","treatment")
       for( i in listParams){
-        query <- paste("SELECT DISTINCT ",i," FROM individual")
+        query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL")
         assign(paste("SqlOutput",i,sep=""),dbGetQuery(con, query))
+        
       }
         
       updatePickerInput(session, "location", choices = SqlOutputexp_location)
@@ -99,9 +104,14 @@ server <- function(input,output,session ){
     filterList1<-substr(filterList1,5,nchar(filterList1))
     
     ######PARTICULAR CASE#####################
+    filterListFinal<-NULL
+    startDate<-input$date[1]
+    endDate<-input$date[2]
+    dateParam<-paste(" dateexp BETWEEN '",startDate,"' and '",endDate,"'",sep="")
+    filterListFinal<-paste(c(filterList1,dateParam),collapse=" and ")
+    
     situation<-NULL
     leafattach<-NULL
-    filterListFinal<-NULL
     if((!input$situation == "Both") || (!input$leafAttach == "Both")){
     if(!input$situation=="Both"){
       situation<-paste(" indout = '",input$situation,"'",sep="")
@@ -110,13 +120,13 @@ server <- function(input,output,session ){
       leafattach<-paste(" leaf_status = '",input$leafAttach,"'",sep="")
     }
       if(is.null(situation)){
-        filterListFinal<-paste(c(filterList1,leafattach),collapse=" and ")
+        filterListFinal<-paste(c(filterListFinal,leafattach),collapse=" and ")
       }
       if(is.null(leafattach)){
-        filterListFinal<-paste(c(filterList1,situation),collapse=" and ")
+        filterListFinal<-paste(c(filterListFinal,situation),collapse=" and ")
       }
       if((!is.null(situation)) && (!is.null(leafattach))){
-        filterListFinal<-paste(c(filterList1,situation,leafattach),collapse=" and ")
+        filterListFinal<-paste(c(filterListFinal,situation,leafattach),collapse=" and ")
       }
     }
     if(filterList1 == ""){
@@ -138,17 +148,17 @@ server <- function(input,output,session ){
     if(filterList1==""){
       #SpectrumOnlyQuery
       spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
-                                filterList1," ORDER BY individual_id" )
+                                filterListFinal," ORDER BY individual_id" )
       #ParametersOnlyQuery
       ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
-                                  filterList1,"ORDER BY individual_id" )
+                                  filterListFinal,"ORDER BY individual_id" )
     } else {
       #SpectrumOnlyQuery
       spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
-                                filterList1," ORDER BY individual_id" )
+                                filterListFinal," ORDER BY individual_id" )
       #ParametersOnlyQuery
       ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
-                                  filterList1,"ORDER BY individual_id" )
+                                  filterListFinal,"ORDER BY individual_id" )
     }
     newtab= data.frame()
     ###########WRITING CSV OUTPUT#######################
@@ -172,7 +182,7 @@ server <- function(input,output,session ){
       output$resText<-renderText({
         if(is.na(res[1,1])){
           return("Your filters don't match any spectrums in the database.")
-        } else{return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))}
+        } else{return(paste("Your filters match ",nrow(newtab)," of 5325 spectra",sep = ""))}
       })
       write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
     }
@@ -192,28 +202,34 @@ server <- function(input,output,session ){
   })
    ##############FORMATING RAWDATA TO USER READABLE DATA#############################
    FormatData<- function(res){
+     start<-1
+     end<-2151
+     n<-(nrow(res)/2151)
      newtab=data.frame()
      newtab <- as.data.frame(matrix(double(),ncol = 2152))
      names(newtab)[2:2152] <- paste0('x', 350:2500)
      colnames(newtab)[1] <- "Id"
-     
-     start<-1
-     end<-2151
-     for(i in 1:(nrow(res)/2151)){
-       id<-res[start,4]
-       sub<-t(res[start:end,3])
-       sub2<-as.data.frame(cbind(id,sub))
-       names(sub2)[2:2152] <- paste0('x', 350:2500)
-       colnames(sub2)[1] <- "Id"
-       start<-start+2151
-       end<-end+2151
-       newtab<-rbind(newtab,sub2)
-       print(i)
-     }
+     rep<-replicate(n,loop(res,start,end),simplify = TRUE)
+     rep[-1,]<-as.numeric(rep[-1,])
+     newtab<-as.data.frame(t(rep))
+     newtab<-data.frame(lapply(newtab, as.character), stringsAsFactors=FALSE)
      return (newtab)
    }
+
+  #####FASTER LOOP######
+  loop<-function(res,start,end){
+    id<-res[start,4]
+    sub<-t(res[start:end,3])
+    sub2<-as.data.frame(cbind(id,sub))
+    names(sub2)[2:2152] <- paste0('x', 350:2500)
+    colnames(sub2)[1] <- "id"
+    assign("start",start+2151)
+    assign("end",end+2151)
+    newtab<- rbind(newtab, sub2)
+    return (newtab)
+  }
   
-  
+  ###########UNIVARIATE PLOT METHOD########
   plotMean<-function(newtab){
     allSpectrum<-read.table(file = "allSpectrum.csv",header = TRUE,sep = ";")
     newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
@@ -237,11 +253,12 @@ server <- function(input,output,session ){
     rdyToPlot<-data.frame(c,name)
     write.table(rdyToPlot,file="rdyToPlot.csv",sep=";",row.names = FALSE)
     #####PLOT######
-    plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1),
+    plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1.2),
          main="Mean comparison",xlab="Wavelength",ylab="Absorption")
     points(rdyToPlot[rdyToPlot$name=="All","wavelength"], rdyToPlot[rdyToPlot$name=="All","absSelec"], col="dodgerblue3", type="l", lwd=3,lty=3)
     legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
   }
+
   observeEvent(input$submit, {
   ######UNIVARIATE GRAPHICAL OUTPUT#############
     # mean plot
@@ -249,6 +266,15 @@ server <- function(input,output,session ){
       plotMean(newtab)
     })
     
+  ######MULTIVARIATE GRAPHICAL OUTPUT#############
+    # selected pca plot
+    output$selectedPCAPlot <- renderPlot({
+      newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
+      params<-read.table(file="paramsOnlyRes.csv",header=TRUE,sep=";")
+      SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
+      fviz_pca_ind(SelectedDataPca,gemo.ind="point",label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
+      
+    })
   })
   
   
@@ -274,6 +300,14 @@ server <- function(input,output,session ){
   
   
   #######OUTPUTS##########
+  # all pca plot
+  output$allPCAPlot <- renderPlot({
+    newtabAll<-read.table(file="newtabAll.csv",header=TRUE,sep=";")
+    phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
+    AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
+    fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")
+  })
+
 
   
   #access to the app from the homepage link

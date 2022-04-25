@@ -55,7 +55,7 @@ ui <- function(){
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("contributor",'Contributor',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width=6,dateRangeInput("date",'Dates')))),
+                                                               column(width=6,dateRangeInput("date",'Dates',start = '2016-01-01',format='yyyy-mm')))),
                                                                #INFOS SAMPLE###############
                                                                p(""),h4("Sample Informations"),wellPanel(fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("genetic_group",'Genetic group',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
@@ -75,7 +75,7 @@ ui <- function(){
                                                                column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
                                                                ##2EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
-                                                               ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,selected = listSecondaryMetabolites,options = list(`actions-box` = TRUE))))),
+                                                               ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE))))),
                                                                #FORMAT##################
                                                                p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
@@ -85,7 +85,10 @@ ui <- function(){
                                                                p(""),
                                                       ))
                                                       ),
-                                               column(width=7,plotOutput('MeanPlot',height=700))
+                                              column(width=7,plotOutput('MeanPlot',height=600),
+                                                      #column(width=6,img(src = "AllSpectraPCA.png")),
+                                                     (column(width=6,plotOutput('allPCAPlot',height =500))),
+                                                             column(width=6,plotOutput('selectedPCAPlot',height =500)))
                                                
                                     ))
                 ),
