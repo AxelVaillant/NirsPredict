@@ -5,7 +5,9 @@ library(ggplot2)
 library(FactoMineR)
 library(factoextra)
 library(ade4)
-server <- function(input,output,session ){
+library(auth0)
+options(shiny.port = 8080)
+auth0::auth0_server(function(input,output,session ){
   
   ############# ####DATABASE MANAGER##########################
   options(mysql = list(
@@ -31,14 +33,14 @@ server <- function(input,output,session ){
   #################################################
   getData <- function(){
     # Connect to the database
-    con <- dbConnect(RPostgres::Postgres(), dbname = "nirsDB", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     
     ######################INPUT UPDATE###########################
     observe({
       listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
                          "measurement","plant_stage","treatment")
       for( i in listParams){
-        query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL")
+        query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL ORDER BY ",i)
         assign(paste("SqlOutput",i,sep=""),dbGetQuery(con, query))
         
       }
@@ -62,7 +64,7 @@ server <- function(input,output,session ){
   ################FORM MANAGER####################
   observeEvent(input$submit, {
     # Connect to the database
-    con <- dbConnect(RPostgres::Postgres(), dbname = "nirsDB", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     
     inputList<-list(input$location,input$exp,input$contributor,input$genotype,input$genetic_group,
                     input$condition,input$leaf_stage,input$plant_stage,input$measurement,input$treatment,
@@ -201,31 +203,26 @@ server <- function(input,output,session ){
     dbDisconnect(con)
   })
    ##############FORMATING RAWDATA TO USER READABLE DATA#############################
-   FormatData<- function(res){
-     start<-1
-     end<-2151
-     n<-(nrow(res)/2151)
-     newtab=data.frame()
-     newtab <- as.data.frame(matrix(double(),ncol = 2152))
-     names(newtab)[2:2152] <- paste0('x', 350:2500)
-     colnames(newtab)[1] <- "Id"
-     rep<-replicate(n,loop(res,start,end),simplify = TRUE)
-     rep[-1,]<-as.numeric(rep[-1,])
-     newtab<-as.data.frame(t(rep))
-     newtab<-data.frame(lapply(newtab, as.character), stringsAsFactors=FALSE)
-     return (newtab)
-   }
-
-  #####FASTER LOOP######
-  loop<-function(res,start,end){
-    id<-res[start,4]
-    sub<-t(res[start:end,3])
-    sub2<-as.data.frame(cbind(id,sub))
-    names(sub2)[2:2152] <- paste0('x', 350:2500)
-    colnames(sub2)[1] <- "id"
-    assign("start",start+2151)
-    assign("end",end+2151)
-    newtab<- rbind(newtab, sub2)
+  #####BASIC LOOP#####
+  FormatData<- function(res){
+    newtab=data.frame()
+    newtab <- as.data.frame(matrix(double(),ncol = 2152))
+    names(newtab)[2:2152] <- paste0('x', 350:2500)
+    colnames(newtab)[1] <- "Id"
+    start<-1
+    end<-2151
+    
+    for(i in 1:(nrow(res)/2151)){
+      id<-res[start,4]
+      sub<-t(res[start:end,3])
+      sub2<-as.data.frame(cbind(id,sub))
+      names(sub2)[2:2152] <- paste0('x', 350:2500)
+      colnames(sub2)[1] <- "Id"
+      start<-start+2151
+      end<-end+2151
+      newtab<- rbind(newtab, sub2)
+      print(i)
+    }
     return (newtab)
   }
   
@@ -304,8 +301,9 @@ server <- function(input,output,session ){
   output$allPCAPlot <- renderPlot({
     newtabAll<-read.table(file="newtabAll.csv",header=TRUE,sep=";")
     phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
-    AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
-    fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")
+    spectre<-newtabAll[,2:2152]
+    #AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
+    #fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")
   })
 
 
@@ -314,3 +312,4 @@ server <- function(input,output,session ){
   observeEvent(input$app, updateTabsetPanel(session = session, inputId = "tabset", selected = "app"))
   
 }
+)

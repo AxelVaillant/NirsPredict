@@ -58,6 +58,8 @@ FormatData<- function(res){
   newtab <- as.data.frame(matrix(double(),ncol = 2152))
   names(newtab)[2:2152] <- paste0('x', 350:2500)
   colnames(newtab)[1] <- "Id"
+  start<-1
+  end<-2151
   
   for(i in 1:(nrow(res)/2151)){
     id<-res[start,4]
@@ -70,6 +72,34 @@ FormatData<- function(res){
     newtab<- rbind(newtab, sub2)
     print(i)
   }
+  return (newtab)
+}
+
+FormatData<- function(res){
+  start<-1
+  end<-2151
+  n<-(nrow(res)/2151)
+  newtab=data.frame()
+  newtab <- as.data.frame(matrix(double(),ncol = 2152))
+  names(newtab)[2:2152] <- paste0('x', 350:2500)
+  colnames(newtab)[1] <- "Id"
+  rep<-replicate(n,loop(res,start,end),simplify = TRUE)
+  rep[-1,]<-as.numeric(rep[-1,])
+  newtab<-as.data.frame(t(rep))
+  newtab<-data.frame(lapply(newtab, as.character), stringsAsFactors=FALSE)
+  return (newtab)
+}
+
+#####FASTER LOOP######
+loop<-function(res,start,end){
+  id<-res[start,4]
+  sub<-t(res[start:end,3])
+  sub2<-as.data.frame(cbind(id,sub))
+  names(sub2)[2:2152] <- paste0('x', 350:2500)
+  colnames(sub2)[1] <- "id"
+  assign("start",start+2151)
+  assign("end",end+2151)
+  newtab<- rbind(newtab, sub2)
   return (newtab)
 }
 #####FASTER LOOP######

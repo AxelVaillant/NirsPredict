@@ -1,19 +1,19 @@
 library(shiny)
 library(shinyWidgets)
-
-ui <- function(){
-  listSugar <- list("arabinose","cellobiose","fructose","fucose","galactose","glucose","inositol",
-                    "isomaltose","maltose","mannose","mannose_xylose","melbiose","melezitose","palatinose",
-                    "raffinose","rhammose","ribose","sucrose","trehalose","xylose")
-  listGlucosinolates<- list("x3mtp","x5mtp","x6msh","x7msh","x7mtp","x8mso","x8mtp","butyl",
-                            "epigallocatechin","epiprogoitrin","glucoalysiin","glucobrassicin","glucoerucin","gluconapin",
-                            "gluconasturtiin","glucoraphanin","glucoraphenin","glucosinalbin","hexyl","isobutyl",
-                            "neoglucabrassicin_peak2","neoglucoabrassicin_peak1","progoitrin","sinirgin")
-  listSecondaryMetabolites<- list("apigenin_rutinoside","caffeic_acid","chlorogenic_acid","citrat",
-                                  "cyanidin_rhamnoside","cyanidin_sophorosid_glucoside","dihydro_caffeoyl_glucuronide","fumarat",
-                                  "kaempherol_glucosyl_rhamnoside","kaempherol_rutinoside","kaempherol_xylosyl_rhamnoside","malat",
-                                  "m_coumaric_acid","pelargonidin_cumaroyl_diglucoside","pelargonidin_sambubioside","prenyl_narigenin",
-                                  "quercetin_glucoside","succinat")
+options(shiny.port = 8080)
+listSugar <- list("arabinose","cellobiose","fructose","fucose","galactose","glucose","inositol",
+                  "isomaltose","maltose","mannose","mannose_xylose","melbiose","melezitose","palatinose",
+                  "raffinose","rhammose","ribose","sucrose","trehalose","xylose")
+listGlucosinolates<- list("x3mtp","x5mtp","x6msh","x7msh","x7mtp","x8mso","x8mtp","butyl",
+                          "epigallocatechin","epiprogoitrin","glucoalysiin","glucobrassicin","glucoerucin","gluconapin",
+                          "gluconasturtiin","glucoraphanin","glucoraphenin","glucosinalbin","hexyl","isobutyl",
+                          "neoglucabrassicin_peak2","neoglucoabrassicin_peak1","progoitrin","sinirgin")
+listSecondaryMetabolites<- list("apigenin_rutinoside","caffeic_acid","chlorogenic_acid","citrat",
+                                "cyanidin_rhamnoside","cyanidin_sophorosid_glucoside","dihydro_caffeoyl_glucuronide","fumarat",
+                                "kaempherol_glucosyl_rhamnoside","kaempherol_rutinoside","kaempherol_xylosyl_rhamnoside","malat",
+                                "m_coumaric_acid","pelargonidin_cumaroyl_diglucoside","pelargonidin_sambubioside","prenyl_narigenin",
+                                "quercetin_glucoside","succinat")
+auth0::auth0_ui(fluidRow(
   bootstrapPage('',
                 tags$style(type="text/css",
                            HTML('.navbar {background-color: #50C21B; font-size: 18px;}
@@ -95,5 +95,5 @@ ui <- function(){
                 tabPanel("About"))
   )
 
-}
-  
+)
+)
