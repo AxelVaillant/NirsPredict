@@ -46,8 +46,8 @@ auth0::auth0_ui(fluidRow(
                                                         tabPanel("Submit Spectrum",
                                                                  p(""),wellPanel(
                                                                  fileInput('spectrumfile','Upload CSV File',
-                                                                           accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
-                                                                 tableOutput("spectrum"))
+                                                                           accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),actionButton("runAnalysis","Run"),
+                                                                 tableOutput("spectrum"),downloadButton('DlSpectrum', label="Download"))
                                                       ),
                                                       tabPanel("Consult Database",
                                                                #INFOS GENERAL###############
@@ -92,8 +92,7 @@ auth0::auth0_ui(fluidRow(
                                                
                                     ))
                 ),
-                tabPanel("About"))
+                tabPanel("About"),tabPanel(logoutButton(label="Logout",id="logout")))
   )
 
-)
-)
+), info = auth0_info)

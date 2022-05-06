@@ -6,8 +6,57 @@ library(FactoMineR)
 library(factoextra)
 library(ade4)
 library(auth0)
+library(sendmailR)
 options(shiny.port = 8080)
 auth0::auth0_server(function(input,output,session ){
+  
+  values <- reactiveValues(
+    auth0_user_data = NULL #Cntain auth0 user data
+  )
+  #----Logout-------
+  observeEvent( input$logout,{
+    logout()
+  })
+  
+  # ------ Auth0: Fetch a token ------------------------------------------------
+  response <- httr::POST(
+    url = paste0("https://nirsdb.eu.auth0.com/oauth/token"),
+    body = paste0(
+      '{"client_id":"', Sys.getenv("M2M_AUTH0_CLIENT"), 
+      '","client_secret":"', Sys.getenv("M2M_AUTH0_SECRET"), 
+      '","audience":"https://nirsdb.eu.auth0.com/api/v2/"', 
+      ',"grant_type":"client_credentials"}'
+    ),
+    httr::add_headers(
+      `content-type` = "application/json"
+    ),
+    encode = "raw"
+  )
+  #if (response$status_code != 200) {
+   # timestamp <- as.integer(Sys.time())
+    #filename <- paste0(timestamp, ".RData")
+    #save.image(file = filename)
+  #}
+  token <- jsonlite::fromJSON(rawToChar(response$content))
+  
+  # ------ Check account approval ----------------------------------------------
+  observe({
+    req(session$userData$auth0_info)
+    token<-session$userData$auth0_credentials
+    request_user <- httr::GET(
+      url = paste0(
+        "https://nirsdb.eu.auth0.com/api/v2/users/", 
+        session$userData$auth0_info$sub
+      ),
+      httr::add_headers(
+        Authorization = paste(token$token_type, token$access_token)
+      )
+    )
+    user_data <- jsonlite::fromJSON(rawToChar(request_user$content))
+    values$auth0_user_data <- user_data
+  })
+    
+    
   
   ############# ####DATABASE MANAGER##########################
   options(mysql = list(
@@ -281,7 +330,7 @@ auth0::auth0_server(function(input,output,session ){
   options(shiny.maxRequestSize=1000*1024^2)
   
   ###UPLOAD HANDLING
-  destDir<-'C:/Users/vaillant/Documents/Projets/ProjetsR/FromScratchNirsDB/uploads'
+  destDir<-'/home/vaillant/Documents/Projets R/RShinyNirsDB/uploads'
   output$spectrum <- renderPrint({
     inFile <- input$spectrumfile
     if(is.null(inFile)){
@@ -294,8 +343,38 @@ auth0::auth0_server(function(input,output,session ){
     }
     result
   })
-  
-  
+  #####DOWNLOAD HANDLING
+  output$DlSpectrum <- downloadHandler(
+    filename = function() {
+           paste('Predictions-', Sys.Date(), '.csv', sep='')
+         },
+         content = function(con) {
+           write.csv(data, con)
+         }
+  )
+
+  ######LAUNCH RUN########
+  observeEvent(input$runAnalysis, {
+  email_user<- values$auth0_user_data$email
+    system(paste("Rscript --vanilla run.R",email_user),wait = FALSE)
+  })
+  ######EMAIL#############
+  observeEvent(input$runAnalysis, {
+  Server<-list(smtpServer<-"in-v3.mailjet.com")
+  from<- "axel.vaillant@cefe.cnrs.fr"
+  #to<- "axel.vaillant@yahoo.fr"
+  to <- session$userData$auth0_info$name
+  Subject = paste0("[NirsDB] Le calcul des prédictions de votre spectre a démarré.")
+  TextPart = paste0(
+    'Bonjour,\n\n',
+    'L’outil NirsDB a démarré le calcul de prédictions lié à votre spectre. ',
+    'Vous recevrez un email sous 24-48 heures avec les résultats.\n\n',
+    'Cet email est automatisé. Merci de ne pas y répondre.'
+  )
+  sendmail(from,to,Subject,TextPart,control=Server)
+  })
+
+
   #######OUTPUTS##########
   # all pca plot
   output$allPCAPlot <- renderPlot({
@@ -311,5 +390,4 @@ auth0::auth0_server(function(input,output,session ){
   #access to the app from the homepage link
   observeEvent(input$app, updateTabsetPanel(session = session, inputId = "tabset", selected = "app"))
   
-}
-)
+}, info = auth0_info)

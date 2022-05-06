@@ -3,5 +3,5 @@ remote_url: ''
 auth0_config:
   api_url: !expr paste0('https://nirsdb.eu.auth0.com')
   credentials:
-    key: !expr Sys.getenv("AUTH0_KEY")
-    secret: !expr Sys.getenv("AUTH0_SECRET")
+    key: "W6zILNzpDYWDFI37ca6Bqvx5l5Wa8v0t"
+    secret: "zTX_vlx6DMJv_YDcKHoyJma9gqnuWanZPe_JWXfZ3CddDcVzIQELe3wftSrFrxdH"
