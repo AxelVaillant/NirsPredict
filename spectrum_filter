@@ -1,0 +1,99 @@
+""" 
+    Module dedicated to the filtering of spectra.
+    Includes Gaussian, Savitzky-Golay, Multiplicative scatter correction, Standard Normal Variate, Haar
+"""
+from scipy.ndimage import gaussian_filter1d
+from scipy.signal import savgol_filter
+import numpy as np
+import pywt
+
+
+def msc_filter(input_data, reference=None):
+    ''' Perform Multiplicative scatter correction '''
+    input_data = input_data.copy()
+     # mean centre correction
+    for i in range(input_data.shape[0]):
+        input_data[i,:] -= input_data[i,:].mean()
+ 
+    # Get the reference spectrum. If not given, estimate it from the mean    
+    if reference is None:    
+        ref = np.mean(input_data, axis=0)
+    else:
+        ref = reference
+ 
+    # Define a new array and populate it with the corrected data    
+    data_msc = np.zeros_like(input_data)
+    for i in range(input_data.shape[0]):
+        # Run regression
+        fit = np.polyfit(ref, input_data[i,:], 1, full=True)
+        # Apply correction
+        data_msc[i,:] = (input_data[i,:] - fit[0][1]) / fit[0][0] 
+    return (data_msc, ref)
+
+def snv_filter(input_data):
+    ''' Perform Standard Normal Variate '''
+    data_snv = np.zeros_like(input_data)
+    for i in range(input_data.shape[0]):
+        data_snv[i,:] = (input_data[i,:] - np.mean(input_data[i,:])) / np.std(input_data[i,:])
+    return data_snv
+
+def gaussian_1(x):
+    return gaussian_filter1d(x, order=2, sigma=1)
+def gaussian_2(x):
+    return gaussian_filter1d(x, order=0, sigma=2)
+def gaussian_3(x):
+    return gaussian_filter1d(x, order=1, sigma=2)
+def gaussian_4(x):
+    return gaussian_filter1d(x, order=1, sigma=1)
+def sav_1(x):
+    return savgol_filter(x, 17, polyorder=2, deriv=2)
+def sav_2(x):
+    return savgol_filter(x, 5, 2, mode='nearest')
+def sav_3(x):
+    return savgol_filter(x, 5, 2, mode='mirror')
+def sav_4(x):
+    return savgol_filter(x, 5, 2)
+def msc(x):
+    return msc_filter(x)[0]
+def snv(x):
+    return snv_filter(x)
+def haar(x):
+    feature_count = len(x[0])
+    sample_count = len(x)
+    x_haar, _ = pywt.dwt(x, wavelet ='haar', mode = 'per')
+    if (feature_count % 2) == 0:
+        return np.stack((x_haar, x_haar), axis=2).reshape(sample_count,feature_count)
+    else:
+        xht=np.stack((x_haar, x_haar), axis=2).reshape(sample_count,feature_count+1)
+        return xht[:,0:feature_count]
+def haar_sq(x):
+    return haar(haar(x))
+
+
+filter_functions = [gaussian_1, gaussian_2, gaussian_3, gaussian_4, sav_1, sav_2, sav_3, sav_4, msc, snv, haar, haar_sq]
+
+
+def generate_filters(spectra_sets, rank):
+    new_spectra = []
+    for spectra_set in spectra_sets:
+        for func in filter_functions:
+            new_spectra.append(func(np.array(spectra_set)))
+    if rank > 0:
+        child_spectra = generate_filters(new_spectra, rank-1)
+        new_spectra += child_spectra
+    return new_spectra
+
+def apply_all_filters(xs, depth = 1):
+    for i in range(len(xs)):
+        x=xs[i]
+        x_set=np.array([x] + generate_filters([x], depth-1))
+        x_set=np.stack(x_set, axis=-1)
+        xs[i]=x_set
+    return xs
+
+def apply_solo_filter(xs, type="all"):
+    for i in range(len(xs)):
+        x = xs[i]
+        x_set = np.stack((x, gaussian_1(x)), axis=-1)
+        xs[i] = x_set
+    return xs

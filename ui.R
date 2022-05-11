@@ -41,15 +41,19 @@ auth0::auth0_ui(fluidRow(
                                     fluidPage(
                                       
                                       p("NirsDB Application"),
-                                      fluidRow(column(width =4,
+                                      fluidRow(
                                                       tabsetPanel(
-                                                        tabPanel("Submit Spectrum",
-                                                                 p(""),wellPanel(
-                                                                 fileInput('spectrumfile','Upload CSV File',
-                                                                           accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),actionButton("runAnalysis","Run"),
-                                                                 tableOutput("spectrum"),downloadButton('DlSpectrum', label="Download"))
+                                                        tabPanel("Submit Spectrum",column(width =4,
+                                                                 p(""),wellPanel(span("The submited file must have headers",style="color:red"),
+                                                                 fileInput('spectrumfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
+                                                                 fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model","Create new model + Predictions"))),
+                                                                          column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models will take several hours."))))),
+                                                                 actionButton("runAnalysis","Run"),
+                                                                 tableOutput("spectrum"),downloadButton('DlSpectrum', label="Download")),
+                                                                 wellPanel(span("Prediction with our models can be imprecise due to specific conditions of your samples. \n
+                                                                                                In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=2),column(width=6,img(src = "GenotypeByPosCustom2.png", width = '100%', height = "auto"))
                                                       ),
-                                                      tabPanel("Consult Database",
+                                                      tabPanel("Consult Database",fluidRow(column(width =4,
                                                                #INFOS GENERAL###############
                                                                p(""),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
@@ -80,17 +84,15 @@ auth0::auth0_ui(fluidRow(
                                                                p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
                                                                                            fluidRow(span(textOutput('resText'),style="color:red;text-align:center;")))),
+                                                               column(width=8,column(width=11,plotOutput('MeanPlot',height=600),
+                                                               #column(width=6,img(src = "AllSpectraPCA.png")),
+                                                               (column(width=6,plotOutput('allPCAPlot',height =500))),
+                                                              column(width=6,plotOutput('selectedPCAPlot',height =500)))))),
                                                       
                                                       tabPanel("Become Contributor",
                                                                p(""),
                                                       ))
-                                                      ),
-                                              column(width=7,plotOutput('MeanPlot',height=600),
-                                                      #column(width=6,img(src = "AllSpectraPCA.png")),
-                                                     (column(width=6,plotOutput('allPCAPlot',height =500))),
-                                                             column(width=6,plotOutput('selectedPCAPlot',height =500)))
-                                               
-                                    ))
+                                                      ))
                 ),
                 tabPanel("About"),tabPanel(logoutButton(label="Logout",id="logout")))
   )

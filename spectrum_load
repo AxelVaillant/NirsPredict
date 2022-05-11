@@ -1,0 +1,49 @@
+""" 
+    Module dedicated to loading of spectra (csv).
+    Manage X, Y, split, scaling, data filtering.
+"""
+
+# import Spectrum_filter as Filters
+from pandas import read_csv
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, QuantileTransformer, PowerTransformer
+
+def load_csv(paths, sep=";"):
+    """ load multiple csv files and convert to numpy array """
+    result = []
+    print(paths)
+    for path in paths:
+        raw = read_csv(path, sep=r'\,|\;', header=None, dtype=np.float32, engine='python') ## np.float32 if memory overflow
+        result.append(raw.values)
+    return result
+
+def cpl_scale_1D(ys, feature_range = (0.1, 0.9)):
+    """ scale single dimension data sets """
+    std_scaler = StandardScaler() 
+    rob_scaler = RobustScaler()   #(method='yeo-johnson' 'uniform) QuantileTransformer output_distribution='normal'
+    
+    ys=ys.values.reshape(len(ys),1)
+    rob_scaler.fit(ys)
+    ys= rob_scaler.transform(ys)
+
+    return ys, std_scaler, rob_scaler
+
+def cpl_scale_2D(xs, feature_range = (0.1, 0.9)):
+    """ scale multiple dimensions data sets """
+    std_scalers = []
+    min_scalers = []
+    
+    channels = xs[0].shape[2]
+
+   
+    for dim in range(channels):
+        min_scalers.append(MinMaxScaler(feature_range))
+        for x in xs:
+            min_scalers[dim].partial_fit(x[:,:,dim])
+    
+    for dim in range(channels):
+        for x in xs:
+            x[:,:,dim] = min_scalers[dim].transform(x[:,:,dim])
+
+    return xs
+

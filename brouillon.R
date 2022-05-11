@@ -315,3 +315,105 @@ spectre<-newtabAll[,2:2152]
 res.pca<- dudi.pca(newtabAll[,2:2152],nf=5,scannf=FALSE)
 system.time(res.pca<- dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE))
 system.time(AllDataPca<-PCA(spectre,scale.unit = TRUE,ncp=5,graph=FALSE))
+
+
+##########################################
+######        WORLD MAP             ######
+##########################################
+
+#########Construction Dataset genotype/position######
+tab<-read.table("phenAll.csv",header = TRUE,sep = ";")
+newtab=data.frame()
+newtab <- as.data.frame(matrix(double(),ncol = 2152))
+for(i in 1:nrow(tab)){
+  row<-tab[i,]
+  if(!row$Genotype==''){
+    newtab<-rbind(newtab,row)
+  }
+}
+genotype<-read.table("/home/vaillant/Documents/genotype.csv",header = TRUE,sep = ';',colClasses = c("character","numeric","numeric"))
+
+tabPos=data.frame()
+tabPos <- as.data.frame(matrix(double(),ncol = 2152))
+for(i in 1:nrow(tab)){
+  row<-tab[i,]
+  if(!row$Genotype==''){
+    for(j in 1:nrow(genotype)){
+      rowGen<-genotype[j,]
+      if(row$Genotype == rowGen$genotype){
+        mrow<-cbind(row$Identification,rowGen)
+        tabPos<-rbind(tabPos,mrow)
+        
+      }
+    }
+  }
+}
+write.table(tabPos,"genotypeByPosition.csv", col.names = TRUE , row.names = FALSE,sep=";" )
+######ApplicationToOurDataset##############
+##-----------WORLD SCALE---------------- ########
+for(i in 1:nrow(genotype)){
+  genotype[i,2]<-as.numeric(sub(",",genotype[i,2],fixed=TRUE))
+  genotype[i,3]<-as.numeric(sub(",",genotype[i,3],fixed=TRUE))
+}
+
+ggplot() +
+  geom_map(
+    data = world, map = world,
+    aes(long, lat, map_id = region),
+    color="black",fill="lightgray",size=0.1
+  ) +
+  geom_point(
+    data = genotype,
+    aes(longitude, latitude, color = genotype),
+    alpha = 0.7
+  ) +
+  theme_void() +
+  theme(legend.position = "none")
+
+##-----------EUROPE SCALE---------------- ########
+worldmap <- ne_countries(scale = 'medium', type = 'map_units',
+                         returnclass = 'sf')
+ggplot() + geom_sf(data = worldmap) +
+  coord_sf(xlim = c(-20, 45), ylim = c(30, 73), expand = FALSE) +
+  geom_point(
+    data = genotype,
+    aes(longitude, latitude, color = genotype),
+    alpha = 0.7
+  ) +
+  theme_void() +
+  theme(legend.position = "none")
+##-----------EUROPE CUSTOM SCALE 1 et 2---------------- ########
+ggplot() + geom_sf(data = worldmap) +
+  coord_sf(xlim = c(-12, 55), ylim = c(30, 73), expand = FALSE) +
+  geom_point(
+    data = genotype,
+    aes(longitude, latitude, color = genotype),
+    alpha = 0.7
+  ) +
+  theme_void() +
+  theme(legend.position = "none")
+#------#
+ggplot() + geom_sf(data = worldmap) +
+  coord_sf(xlim = c(-11, 30), ylim = c(35, 60), expand = FALSE) +
+  geom_point(
+    data = genotype,
+    aes(longitude, latitude ),
+    alpha = 0.7,col='red'
+  ) +
+  theme_void() +
+  theme(legend.position = "none") +
+  labs(title="Genotype locations")
+
+
+##-----------WORLD CUSTOM SCALE---------------- ########
+ggplot() + geom_sf(data = worldmap) +
+  coord_sf(xlim = c(-130, 150), ylim = c(10, 73), expand = FALSE) +
+  geom_point(
+    data = genotype,
+    aes(longitude, latitude),
+    alpha = 0.7,col='red',size=0.8
+  ) +
+  theme_void() +
+  theme(legend.position = "none") +
+  labs(title="Genotype locations")
+

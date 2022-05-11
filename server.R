@@ -332,9 +332,11 @@ auth0::auth0_server(function(input,output,session ){
   ###UPLOAD HANDLING
   destDir<-'/home/vaillant/Documents/Projets R/RShinyNirsDB/uploads'
   output$spectrum <- renderPrint({
+    req(input$spectrumfile)
     inFile <- input$spectrumfile
     if(is.null(inFile)){
       return(FALSE)
+    } else {
     }
     if(dir.exists(destDir)){
       result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
@@ -353,13 +355,43 @@ auth0::auth0_server(function(input,output,session ){
          }
   )
 
+  
   ######LAUNCH RUN########
   observeEvent(input$runAnalysis, {
-  email_user<- values$auth0_user_data$email
-    system(paste("Rscript --vanilla run.R",email_user),wait = FALSE)
-  })
+    
+  #observeEvent(input$runAnalysis, {
+  #email_user<- values$auth0_user_data$email
+  #  system(paste("Rscript --vanilla run.R",email_user),wait = FALSE)
+  #})
+    
+    #----------Connect to GPU----------------
+    sessionGpu<-ssh_connect("login@gpuAdress")
+    print(sessionGpu)
+    
+    if(input$runMode=="Predictions using our model"){
+      ###--PREDICTIONS ONLY MODE(FAST WAY)--###
+      #-----------Transfer spectrum file-------
+      file.path<-R.home("fileToSend")
+      scp_upload(sessionGpu,file.path)
+      #-----------Execute python script--------
+      
+      
+      #-----------Get output file------------ --
+      
+    } else if (input$runMode=="Create new model + Predictions"){
+      ###--NEW MODEL + PREDICTIONS MODE(SLOW WAY)--###
+      #-----------Transfer spectrum file-------
+      file.path<-R.home("fileToSend")
+      scp_upload(sessionGpu,file.path)
+      #-----------Execute python script--------
+      
+      
+      #-----------Get output file------------ --
+      
+    }
+    ssh_disconnect(sessionGpu)
+    
   ######EMAIL#############
-  observeEvent(input$runAnalysis, {
   Server<-list(smtpServer<-"in-v3.mailjet.com")
   from<- "axel.vaillant@cefe.cnrs.fr"
   #to<- "axel.vaillant@yahoo.fr"
@@ -384,7 +416,6 @@ auth0::auth0_server(function(input,output,session ){
     #AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
     #fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")
   })
-
 
   
   #access to the app from the homepage link
