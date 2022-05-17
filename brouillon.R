@@ -417,3 +417,16 @@ ggplot() + geom_sf(data = worldmap) +
   theme(legend.position = "none") +
   labs(title="Genotype locations")
 
+SLA<-X6_NIRS_Metadata_Fit$SLA_mm2_mg
+b<-X6_NIRS_Metadata_Fit[,100:2250]
+testtable = data.frame()
+testtable<-cbind(SLA,b)
+write.table(testtable,"testtable.csv",col.names = TRUE,row.names=FALSE,sep=";")
+
+write.table(SLA,"SLA2.csv",col.names = FALSE,row.names=FALSE,sep=";")
+
+write.table(SLA[1:5,],"SLAmini.csv",col.names = FALSE,row.names=FALSE,sep=";")
+
+
+
+

@@ -19,3 +19,6 @@ library(sf)
 library(rnaturalearth)
 library(shinyjs)
 library(ssh)
+library(httr)
+library(jsonlite)
+

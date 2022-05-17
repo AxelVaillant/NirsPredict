@@ -22,8 +22,8 @@ auth0::auth0_server(function(input,output,session ){
   response <- httr::POST(
     url = paste0("https://nirsdb.eu.auth0.com/oauth/token"),
     body = paste0(
-      '{"client_id":"', Sys.getenv("M2M_AUTH0_CLIENT"), 
-      '","client_secret":"', Sys.getenv("M2M_AUTH0_SECRET"), 
+      '{"client_id":"', "W6zILNzpDYWDFI37ca6Bqvx5l5Wa8v0t", 
+      '","client_secret":"',"zTX_vlx6DMJv_YDcKHoyJma9gqnuWanZPe_JWXfZ3CddDcVzIQELe3wftSrFrxdH", 
       '","audience":"https://nirsdb.eu.auth0.com/api/v2/"', 
       ',"grant_type":"client_credentials"}'
     ),
@@ -42,7 +42,7 @@ auth0::auth0_server(function(input,output,session ){
   # ------ Check account approval ----------------------------------------------
   observe({
     req(session$userData$auth0_info)
-    token<-session$userData$auth0_credentials
+    #token<-session$userData$auth0_credentials
     request_user <- httr::GET(
       url = paste0(
         "https://nirsdb.eu.auth0.com/api/v2/users/", 
@@ -363,39 +363,19 @@ auth0::auth0_server(function(input,output,session ){
   #email_user<- values$auth0_user_data$email
   #  system(paste("Rscript --vanilla run.R",email_user),wait = FALSE)
   #})
-    
-    #----------Connect to GPU----------------
-    sessionGpu<-ssh_connect("login@gpuAdress")
-    print(sessionGpu)
-    
-    if(input$runMode=="Predictions using our model"){
-      ###--PREDICTIONS ONLY MODE(FAST WAY)--###
-      #-----------Transfer spectrum file-------
-      file.path<-R.home("fileToSend")
-      scp_upload(sessionGpu,file.path)
-      #-----------Execute python script--------
-      
-      
-      #-----------Get output file------------ --
-      
-    } else if (input$runMode=="Create new model + Predictions"){
-      ###--NEW MODEL + PREDICTIONS MODE(SLOW WAY)--###
-      #-----------Transfer spectrum file-------
-      file.path<-R.home("fileToSend")
-      scp_upload(sessionGpu,file.path)
-      #-----------Execute python script--------
-      
-      
-      #-----------Get output file------------ --
-      
-    }
-    ssh_disconnect(sessionGpu)
-    
+ 
   ######EMAIL#############
   Server<-list(smtpServer<-"in-v3.mailjet.com")
   from<- "axel.vaillant@cefe.cnrs.fr"
   #to<- "axel.vaillant@yahoo.fr"
-  to <- session$userData$auth0_info$name
+  #to <- session$userData$auth0_info$name
+  
+  to<-values$auth0_user_data$email
+  
+  system(
+    paste("Rscript --vanilla run.R",to) , wait = FALSE
+  )
+  
   Subject = paste0("[NirsDB] Le calcul des prédictions de votre spectre a démarré.")
   TextPart = paste0(
     'Bonjour,\n\n',
@@ -403,7 +383,7 @@ auth0::auth0_server(function(input,output,session ){
     'Vous recevrez un email sous 24-48 heures avec les résultats.\n\n',
     'Cet email est automatisé. Merci de ne pas y répondre.'
   )
-  sendmail(from,to,Subject,TextPart,control=Server)
+  #sendmail(from,to,Subject,TextPart,control=Server)
   })
 
 
