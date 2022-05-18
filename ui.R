@@ -94,7 +94,10 @@ auth0::auth0_ui(fluidRow(
                                                       ))
                                                       ))
                 ),
-                tabPanel("About"),tabPanel(logoutButton(label="Logout",id="logout")))
+                tabPanel("About",fluidRow(column(width=6,offset=3,wellPanel(align = "justify",
+                                                                            HTML("<h1 align = 'center'>NirsDB</h1>"),
+                                                                            HTML("<p align = 'center'>NirsDB is tool allowing to make deep-learning predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum</p>"),
+                                                                            HTML("<p align = 'center'><img src = 'cefe.png' width = '150px' height = 'auto'><img src = 'cnrs.png' width = '150px' height = 'auto'></p>"))))),tabPanel(logoutButton(label="Logout",id="logout")))
   )
 
 ), info = auth0_info)

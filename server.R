@@ -32,11 +32,7 @@ auth0::auth0_server(function(input,output,session ){
     ),
     encode = "raw"
   )
-  #if (response$status_code != 200) {
-   # timestamp <- as.integer(Sys.time())
-    #filename <- paste0(timestamp, ".RData")
-    #save.image(file = filename)
-  #}
+
   token <- jsonlite::fromJSON(rawToChar(response$content))
   
   # ------ Check account approval ----------------------------------------------
@@ -337,6 +333,18 @@ auth0::auth0_server(function(input,output,session ){
     if(is.null(inFile)){
       return(FALSE)
     } else {
+      #----------Connect to GPU----------------
+      sessionGpu<-ssh_connect("login@gpuAdress")
+      print(v)
+      #-----------Transfer spectrum file-------
+      file.path<-R.home("fileToSend")
+      scp_upload(sessionGpu,file.path)
+      #-----------Execute python script--------
+      
+      
+      #-----------Get output file------------ --
+      
+      ssh_disconnect(sessionGpu)
     }
     if(dir.exists(destDir)){
       result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
@@ -361,7 +369,7 @@ auth0::auth0_server(function(input,output,session ){
     
   #observeEvent(input$runAnalysis, {
   #email_user<- values$auth0_user_data$email
-  #  system(paste("Rscript --vanilla run.R",email_user),wait = FALSE)
+  #  system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
   #})
  
   ######EMAIL#############
