@@ -7,7 +7,6 @@ library(factoextra)
 library(ade4)
 library(auth0)
 library(sendmailR)
-options(shiny.port = 8080)
 auth0::auth0_server(function(input,output,session ){
   
   values <- reactiveValues(
@@ -334,16 +333,37 @@ auth0::auth0_server(function(input,output,session ){
       return(FALSE)
     } else {
       #----------Connect to GPU----------------
-      sessionGpu<-ssh_connect("login@gpuAdress")
-      print(v)
-      #-----------Transfer spectrum file-------
-      file.path<-R.home("fileToSend")
-      scp_upload(sessionGpu,file.path)
-      #-----------Execute python script--------
+      sessionGpu<-ssh_connect("vaillant@10.8.5.143",passwd = "clm!dpd!av!")
+      print(sessionGpu)
+      #ssh_exec_internal(sessionGpu,"mkdir dirtest")
+      #ssh_exec_internal(sessionGpu,"rm -rf dirtest")
       
+      if(input$runMode == "Predictions using our model"){
+        
+        #-----------Transfer spectrum file-------
+        file.path<-"uploads/NirsDataUpl.csv"
+        scp_upload(sessionGpu,file.path)
+        #-----------Execute python script--------
+        ssh_exec_internal(sessionGpu,"python runtest.py")
+        
+        
+        #-----------Get output files------------ --
+        scp_download(sessionGpu,"NirsDataUpl.csv", to = "www")
+        
+      } else if (input$runMode == "Create new model + Predictions"){
+        
+        #-----------Transfer spectrum file-------
+        file.path<-"uploads/NirsDataUpl.csv"
+        scp_upload(sessionGpu,file.path)
+        #-----------Execute python script--------
+        ssh_exec_internal(sessionGpu,"python runtest.py")
+        
+        
+        #-----------Get output files------------ --
+        scp_download(sessionGpu,"NirsDataUpl.csv", to = "Results")
+      }
       
-      #-----------Get output file------------ --
-      
+      #-----------Disconnect-----------------
       ssh_disconnect(sessionGpu)
     }
     if(dir.exists(destDir)){
@@ -356,10 +376,10 @@ auth0::auth0_server(function(input,output,session ){
   #####DOWNLOAD HANDLING
   output$DlSpectrum <- downloadHandler(
     filename = function() {
-           paste('Predictions-', Sys.Date(), '.csv', sep='')
+           paste("Predictions-", Sys.Date(), ".csv", sep="")
          },
-         content = function(con) {
-           write.csv(data, con)
+         content = function(file) {
+           file.copy("uploads/NirsDataUpl.csv",file)
          }
   )
 

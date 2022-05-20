@@ -1,6 +1,5 @@
 library(shiny)
 library(shinyWidgets)
-options(shiny.port = 8080)
 listSugar <- list("arabinose","cellobiose","fructose","fucose","galactose","glucose","inositol",
                   "isomaltose","maltose","mannose","mannose_xylose","melbiose","melezitose","palatinose",
                   "raffinose","rhammose","ribose","sucrose","trehalose","xylose")
