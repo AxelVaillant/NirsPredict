@@ -158,38 +158,57 @@ auth0::auth0_server(function(input,output,session ){
     
     situation<-NULL
     leafattach<-NULL
-    if((!input$situation == "Both") || (!input$leafAttach == "Both")){
+    nataccessions<-NULL
+    if((!input$situation == "Both") || (!input$leafAttach == "Both") || (!input$nataccessions == "Included")){
     if(!input$situation=="Both"){
       situation<-paste(" indout = '",input$situation,"'",sep="")
     }
     if(!input$leafAttach=="Both"){
       leafattach<-paste(" leaf_status = '",input$leafAttach,"'",sep="")
     }
-      if(is.null(situation)){
+    if(input$nataccessions == "Only"){
+      nataccessions<-paste(" genotype IS NULL",sep="")
+      }
+    if(input$nataccessions == "Excluded"){
+      nataccessions<-paste(" genotype !=''",sep="")
+      }
+      if(!is.null(situation) && is.null(leafattach) && is.null(nataccessions)){
+        filterListFinal<-paste(c(filterListFinal,situation),collapse=" and ")
+      }
+      if(!is.null(leafattach) && is.null(situation) && is.null(nataccessions)){
         filterListFinal<-paste(c(filterListFinal,leafattach),collapse=" and ")
       }
-      if(is.null(leafattach)){
-        filterListFinal<-paste(c(filterListFinal,situation),collapse=" and ")
+      if(!is.null(nataccessions) && is.null(situation) && is.null(leafattach)){
+        filterListFinal<-paste(c(filterListFinal,nataccessions),collapse=" and ")
       }
       if((!is.null(situation)) && (!is.null(leafattach))){
         filterListFinal<-paste(c(filterListFinal,situation,leafattach),collapse=" and ")
       }
+      if((!is.null(situation)) && (!is.null(nataccessions))){
+        filterListFinal<-paste(c(filterListFinal,situation,nataccessions),collapse=" and ")
+      }
+      if((!is.null(leafattach)) && (!is.null(nataccessions))){
+        filterListFinal<-paste(c(filterListFinal,leafattach,nataccessions),collapse=" and ")
+      }
     }
+    
+  
     if(filterList1 == ""){
       filterListFinal<-substr(filterListFinal,5,nchar(filterListFinal))
+      filterListFinal<-paste("WHERE",filterListFinal)
     }
     ######SELECT CONDITION###########"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
-    parametersSelect <-"individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,
-    leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan int,SLA , 
-    LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , 
-    glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,
-    melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucorassicin , glucoerucin , 
-    gluconapin , gluconasturtiin , glucoraphanin , glucoraphenin , epigallocatechin , progoitrin , epiprogoitrin , isobutyl , glucosinalbin ,
-    sinigrin , hexyl , butyl , neoglucobrassicinPeak1 , neoglucobrasssicinPeak2 , X3MTP , X5MTP , X6MSH , X7MSH , X7MTH , X8MSO ,
-    X8MTO ,apigeninrutinoside , caffeicacid , chlorogenicacid , citrat , cyanidinRhamnoside , CyanidinSophorosidGlucoside , dihydroCaffeoylGlucuronide , 
-    Fumarat , KaempherolGlucosylRhamnosylGlucoside , KaempherolRutinoside , KaempherolXylosylRhamnoside , malat , mcourmaricacid , pcoumaricacid ,
-    pelargonidincumaroyldiglucoside , pelargonidinsambubioside , prenylnaringenin , quercetinglucoside , succinat,maltose"
+    parametersSelect <-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
+    "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan int,SLA,", 
+    "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
+    "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",
+    "melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucorassicin , glucoerucin , ",
+    "gluconapin , gluconasturtiin , glucoraphanin , glucoraphenin , epigallocatechin , progoitrin , epiprogoitrin , isobutyl , glucosinalbin ,",
+    "sinigrin , hexyl , butyl , neoglucobrassicinPeak1 , neoglucobrasssicinPeak2 , X3MTP , X5MTP , X6MSH , X7MSH , X7MTH , X8MSO ,",
+    "X8MTO ,apigeninrutinoside , caffeicacid , chlorogenicacid , citrat , cyanidinRhamnoside , CyanidinSophorosidGlucoside , dihydroCaffeoylGlucuronide , ",
+    "Fumarat , KaempherolGlucosylRhamnosylGlucoside , KaempherolRutinoside , KaempherolXylosylRhamnoside , malat , mcourmaricacid , pcoumaricacid ,",
+    "pelargonidincumaroyldiglucoside , pelargonidinsambubioside , prenylnaringenin , quercetinglucoside , succinat,maltose",sep = "")
     
     if(filterList1==""){
       #SpectrumOnlyQuery
@@ -214,32 +233,53 @@ auth0::auth0_server(function(input,output,session ){
       newtab <-FormatData(res)
       write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
       write.table(paramsOnlyRes,file="paramsOnlyRes.csv",sep = ";",row.names = FALSE)
-      allDataRes <- cbind(paramsOnlyRes[2:97],newtab[2:2152])
-      output$resText<-renderText({
-        if(is.na(res[1,1])){
-          return("Your filters don't match any spectrums in the database.")
-        } else{return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))}
-      })
-      write.table(allDataRes,file="allDataRes.csv",sep = ";",row.names = FALSE)
+      if(is.na(res[1,1])){
+        output$resText<-renderText({
+          HTML(paste("Your filters don't match any spectrums in the database.",
+                     "Please retry with less specific criteria", sep="\n "))
+        })
+      } else {
+        allDataRes <- cbind(paramsOnlyRes[2:97],newtab[2:2152])
+        output$resText<-renderText({
+          return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
+        })
+        write.table(allDataRes,file="allDataRes.csv",sep = ";",row.names = FALSE)
+        show("DlConsult")
+        uploadData("allDataRes")
+      }
     }
     if(input$outputformat=="Spectrum only"){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       newtab <-FormatData(res)
-      output$resText<-renderText({
-        if(is.na(res[1,1])){
-          return("Your filters don't match any spectrums in the database.")
-        } else{return(paste("Your filters match ",nrow(newtab)," of 5325 spectra",sep = ""))}
-      })
+      if(is.na(res[1,1])){
+        output$resText<-renderText({
+          HTML(paste("Your filters don't match any spectrums in the database.",
+                     "Please retry with less specific criteria", sep="\n "))
+        })
+      } else {
+        output$resText<-renderText({
+          return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
+        })
+      }
       write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
+      show("DlConsult")
+      uploadData("selectedSpectrums")
     }
     if(input$outputformat=="Phenotypic traits only"){
       paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
-      output$resText<-renderText({
-        if(is.na(paramsOnlyRes[1,1])){
-          return("Your filters don't match any spectrums in the database.")
-        } else{return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))}
-      })
+      if(is.na(paramsOnlyRes[1,1])){
+        output$resText<-renderText({
+          HTML(paste("Your filters don't match any spectrums in the database.",
+                     "Please retry with less specific criteria", sep="\n "))
+        })
+      } else {
+        output$resText<-renderText({
+          return(paste("Your filters matches ",nrow(paramsOnlyRes)," of 5325 spectra",sep = ""))
+        })
+      }
       write.table(paramsOnlyRes,file="paramsOnlyRes.csv",sep = ";",row.names = FALSE)
+      show("DlConsult")
+      uploadData("paramsOnlyRes")
     }
     
     #write.table(res,file="rawRes.csv",sep = ";",row.names = FALSE)
@@ -274,30 +314,32 @@ auth0::auth0_server(function(input,output,session ){
   plotMean<-function(newtab){
     allSpectrum<-read.table(file = "allSpectrum.csv",header = TRUE,sep = ";")
     newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
-    selecSpectrum <- as.data.frame(matrix(double(),ncol = 2))
-    for(i in 350:2500){
-      val<-paste('x',i,sep = "")
-      absSelec<-newtab[,val]
-      rowsel<-as.data.frame(cbind(mean(as.numeric(absSelec)),i))
-      selecSpectrum<- rbind(selecSpectrum, rowsel)
+    if(!is.na(newtab[1,1])){
+      selecSpectrum <- as.data.frame(matrix(double(),ncol = 2))
+      for(i in 350:2500){
+        val<-paste('x',i,sep = "")
+        absSelec<-newtab[,val]
+        rowsel<-as.data.frame(cbind(mean(as.numeric(absSelec)),i))
+        selecSpectrum<- rbind(selecSpectrum, rowsel)
+      }
+      
+      absSelec<-selecSpectrum[,1]
+      absAll<-allSpectrum[,1]
+      c=data.frame(absSelec)
+      for(j in 1:length(absAll)){
+        c<-rbind(c,absAll[j])
+      }
+      wavelength=c(350:2500)
+      c<-cbind(c,wavelength)
+      name<-as.factor(rep(c("Individual","All"),each=2151))
+      rdyToPlot<-data.frame(c,name)
+      write.table(rdyToPlot,file="rdyToPlot.csv",sep=";",row.names = FALSE)
+      #####PLOT######
+      plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1.2),
+           main="Mean comparison",xlab="Wavelength",ylab="Absorption")
+      points(rdyToPlot[rdyToPlot$name=="All","wavelength"], rdyToPlot[rdyToPlot$name=="All","absSelec"], col="dodgerblue3", type="l", lwd=3,lty=3)
+      legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
     }
-    
-    absSelec<-selecSpectrum[,1]
-    absAll<-allSpectrum[,1]
-    c=data.frame(absSelec)
-    for(j in 1:length(absAll)){
-      c<-rbind(c,absAll[j])
-    }
-    wavelength=c(350:2500)
-    c<-cbind(c,wavelength)
-    name<-as.factor(rep(c("Individual","All"),each=2151))
-    rdyToPlot<-data.frame(c,name)
-    write.table(rdyToPlot,file="rdyToPlot.csv",sep=";",row.names = FALSE)
-    #####PLOT######
-    plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1.2),
-         main="Mean comparison",xlab="Wavelength",ylab="Absorption")
-    points(rdyToPlot[rdyToPlot$name=="All","wavelength"], rdyToPlot[rdyToPlot$name=="All","absSelec"], col="dodgerblue3", type="l", lwd=3,lty=3)
-    legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
   }
 
   observeEvent(input$submit, {
@@ -312,9 +354,10 @@ auth0::auth0_server(function(input,output,session ){
     output$selectedPCAPlot <- renderPlot({
       newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
       params<-read.table(file="paramsOnlyRes.csv",header=TRUE,sep=";")
-      SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
-      fviz_pca_ind(SelectedDataPca,gemo.ind="point",label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
-      
+      if(!is.na(newtab[1,1])){
+        SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
+        fviz_pca_ind(SelectedDataPca,gemo.ind="point",label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
+      }
     })
   })
   
@@ -373,7 +416,7 @@ auth0::auth0_server(function(input,output,session ){
     }
     result
   })
-  #####DOWNLOAD HANDLING
+  #####PREDICTIONS DOWNLOAD HANDLING
   output$DlSpectrum <- downloadHandler(
     filename = function() {
            paste("Predictions-", Sys.Date(), ".csv", sep="")
@@ -382,7 +425,18 @@ auth0::auth0_server(function(input,output,session ){
            file.copy("uploads/NirsDataUpl.csv",file)
          }
   )
-
+  #####CONSULTATION DOWNLOAD HANDLING
+  uploadData <- function(outputname) {
+    output$DlConsult <- downloadHandler(
+      filename = function() {
+        paste("SelectedSpectrums-", Sys.Date(), ".csv", sep="")
+      },
+      content = function(file) {
+        file.copy(paste(outputname,".csv",sep = ""),file)
+      }
+    )
+  }
+  
   
   ######LAUNCH RUN########
   observeEvent(input$runAnalysis, {
