@@ -12,7 +12,7 @@ listSecondaryMetabolites<- list("apigenin_rutinoside","caffeic_acid","chlorogeni
                                 "kaempherol_glucosyl_rhamnoside","kaempherol_rutinoside","kaempherol_xylosyl_rhamnoside","malat",
                                 "m_coumaric_acid","pelargonidin_cumaroyl_diglucoside","pelargonidin_sambubioside","prenyl_narigenin",
                                 "quercetin_glucoside","succinat")
-auth0::auth0_ui(fluidRow(
+auth0::auth0_ui(fluidRow(useShinyjs(),
   bootstrapPage('',
                 tags$style(type="text/css",
                            HTML('.navbar {background-color: #50C21B; font-size: 18px;}
@@ -20,7 +20,8 @@ auth0::auth0_ui(fluidRow(
                            .navbar-default .navbar-nav > .active > a, 
                            .navbar-default .navbar-nav > .active > a:focus, 
                            .navbar-default .navbar-nav > .active > a:hover {color: #000000; background-color: #6AF32A;}
-                           .well {background-color: #82E780;}')),
+                           .well {background-color: #82E780;}
+                                pre{color:red;background-color:#fbf65e;}')),
                 tags$head(tags$link(rel="shortcut icon", href="/www/favicon.ico")),
                 navbarPage(title = "NirsDB", id = "tabset", 
                            tabPanel("Home page",
@@ -72,7 +73,8 @@ auth0::auth0_ui(fluidRow(
                                                                fluidRow(column(width =6,pickerInput("plant_stage",'Plant Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width=6,pickerInput("measurement",'Measurement',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###5EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))))),
+                                                               fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                                        column(width=6,radioButtons("nataccessions","Natural Accessions",choices=list("Included","Only","Excluded"))))),
                                                                #OTHER OPTIONS#############
                                                                p(""),h4("Other Options"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
@@ -82,7 +84,7 @@ auth0::auth0_ui(fluidRow(
                                                                #FORMAT##################
                                                                p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
-                                                                                           fluidRow(span(textOutput('resText'),style="color:red;text-align:center;")))),
+                                                                                           fluidRow(span(verbatimTextOutput('resText'),style="color:red;text-align:center;"),shinyjs::hidden(downloadButton('DlConsult', label="Download"))))),
                                                                column(width=8,column(width=11,plotOutput('MeanPlot',height=600),
                                                                #column(width=6,img(src = "AllSpectraPCA.png")),
                                                                (column(width=6,plotOutput('allPCAPlot',height =500))),
