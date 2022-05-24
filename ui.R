@@ -1,18 +1,20 @@
 library(shiny)
 library(shinyWidgets)
 listSugar <- list("arabinose","cellobiose","fructose","fucose","galactose","glucose","inositol",
-                  "isomaltose","maltose","mannose","mannose_xylose","melbiose","melezitose","palatinose",
-                  "raffinose","rhammose","ribose","sucrose","trehalose","xylose")
+                  "isomaltose","maltose","mannose","mannoseXylose","melbiose","melezitose","palatinose",
+                  "raffinose","rhamnose","ribose","sucrose","trehalose","xylose")
 listGlucosinolates<- list("x3mtp","x5mtp","x6msh","x7msh","x7mtp","x8mso","x8mtp","butyl",
                           "epigallocatechin","epiprogoitrin","glucoalysiin","glucobrassicin","glucoerucin","gluconapin",
                           "gluconasturtiin","glucoraphanin","glucoraphenin","glucosinalbin","hexyl","isobutyl",
-                          "neoglucabrassicin_peak2","neoglucoabrassicin_peak1","progoitrin","sinirgin")
-listSecondaryMetabolites<- list("apigenin_rutinoside","caffeic_acid","chlorogenic_acid","citrat",
-                                "cyanidin_rhamnoside","cyanidin_sophorosid_glucoside","dihydro_caffeoyl_glucuronide","fumarat",
-                                "kaempherol_glucosyl_rhamnoside","kaempherol_rutinoside","kaempherol_xylosyl_rhamnoside","malat",
-                                "m_coumaric_acid","pelargonidin_cumaroyl_diglucoside","pelargonidin_sambubioside","prenyl_narigenin",
-                                "quercetin_glucoside","succinat")
+                          "neoglucabrassicinpeak2","neoglucoabrassicinpeak1","progoitrin","sinirgin")
+listSecondaryMetabolites<- list("apigeninRutinoside","caffeicAcid","chlorogenicAcid","citrat",
+                                "cyanidinRhamnoside","cyanidinSophorosidGlucoside","dihydroCaffeoylGlucuronide","fumarat",
+                                "kaempherolGlucosylRhamnoside","kaempherolRutinoside","kaempherolXylosylRhamnoside","malat",
+                                "mCoumaricAcid","pelargonidinCumaroylDiglucoside","pelargonidinSambubioside","prenylNarigenin",
+                                "quercetinGlucoside","succinat")
 auth0::auth0_ui(fluidRow(useShinyjs(),
+                         #---prevent page reload to crash----
+                         tagList( tags$head( tags$script(htmlwidgets::JS("setTimeout(function(){history.pushState({}, 'Page Title', '/');},2000);")))),
   bootstrapPage('',
                 tags$style(type="text/css",
                            HTML('.navbar {background-color: #50C21B; font-size: 18px;}
@@ -75,16 +77,16 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                ###5EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                         column(width=6,radioButtons("nataccessions","Natural Accessions",choices=list("Included","Only","Excluded"))))),
-                                                               #OTHER OPTIONS#############
-                                                               p(""),h4("Other Options"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
-                                                               column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
-                                                               ##2EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
-                                                               ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE))))),
                                                                #FORMAT##################
-                                                               p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only"))),
+                                                               p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only","Custom"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
-                                                                                           fluidRow(span(verbatimTextOutput('resText'),style="color:red;text-align:center;"),shinyjs::hidden(downloadButton('DlConsult', label="Download"))))),
+                                                                                           fluidRow(span(verbatimTextOutput('resText'),style="color:red;text-align:center;"),shinyjs::hidden(downloadButton('DlConsult', label="Download")))),
+                                                               #CUSTOM OPTIONS#############
+                                                               p(""),shinyjs::hidden(div(id="customoptions",h4("Custom Options"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
+                                                                                                                             column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
+                                                                                                                    ##2EME LIGNE
+                                                                                                                    fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
+                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE)))))))),
                                                                column(width=8,column(width=11,plotOutput('MeanPlot',height=600),
                                                                #column(width=6,img(src = "AllSpectraPCA.png")),
                                                                (column(width=6,plotOutput('allPCAPlot',height =500))),

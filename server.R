@@ -130,7 +130,7 @@ auth0::auth0_server(function(input,output,session ){
     #############QUERY BUILDING##############################
     #######"WHERE"QUERY BUILDING#############
     filterList1<-""
-    for(i in 1:length(inputList)){
+    for(i in 1:10){
       paramList<-""
       if(!is.null(inputList[i][[1]])){
         for(j in 1:length(inputList[[i]])){
@@ -197,10 +197,35 @@ auth0::auth0_server(function(input,output,session ){
       filterListFinal<-substr(filterListFinal,5,nchar(filterListFinal))
       filterListFinal<-paste("WHERE",filterListFinal)
     }
+    
+    
+    ######PARAMETERS FILTER (PHENOTYPIC TRAITS ONLY CASE)
+    basicParameters<-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
+                           "leaf_stage,type_sample,measurement,leaf_status,dateexp,plant_lifespan ,SLA,", 
+                           "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX")
+    otherFilterList<-""
+    otherFilterFinal<-NULL
+    for(i in 11:14){
+      otherFilterList<-""
+      if(!is.null(inputList[i][[1]])){
+        for(j in 1:length(inputList[[i]])){
+          otherFilterList<-paste(otherFilterList,inputList[[i]][j],",",sep ="")
+        }
+       
+        otherFilterFinal<-paste(otherFilterFinal,otherFilterList,sep = "")
+      }
+    }
+    otherFilterFinal<-substr(otherFilterFinal,1,nchar(otherFilterFinal)-1)
+    if(otherFilterFinal != ""){
+      customSelect<-paste(basicParameters,",",otherFilterFinal,sep = "")
+    } else {
+      customSelect<-basicParameters
+    }
+
     ######SELECT CONDITION###########"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
     parametersSelect <-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
-    "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan int,SLA,", 
+    "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
     "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
     "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",
     "melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucorassicin , glucoerucin , ",
@@ -217,6 +242,9 @@ auth0::auth0_server(function(input,output,session ){
       #ParametersOnlyQuery
       ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
                                   filterListFinal,"ORDER BY individual_id" )
+      #CustomParametersQuery
+      CustomQuery<-paste("SELECT DISTINCT",customSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
+                         filterListFinal,"ORDER BY individual_id" )
     } else {
       #SpectrumOnlyQuery
       spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
@@ -224,9 +252,13 @@ auth0::auth0_server(function(input,output,session ){
       #ParametersOnlyQuery
       ParametersOnlyQuery<- paste("SELECT DISTINCT",parametersSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
                                   filterListFinal,"ORDER BY individual_id" )
+      #CustomParametersQuery
+      CustomQuery<-paste("SELECT DISTINCT",customSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
+                         filterListFinal,"ORDER BY individual_id" )
     }
     newtab= data.frame()
     ###########WRITING CSV OUTPUT#######################
+    #----------All Data Output----------------
     if(input$outputformat=="All Data"){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
@@ -248,6 +280,7 @@ auth0::auth0_server(function(input,output,session ){
         uploadData("allDataRes")
       }
     }
+    #----------------Spectrum Only Output----------
     if(input$outputformat=="Spectrum only"){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       newtab <-FormatData(res)
@@ -265,6 +298,7 @@ auth0::auth0_server(function(input,output,session ){
       show("DlConsult")
       uploadData("selectedSpectrums")
     }
+    #---------All Phenotypic traits only Output-------
     if(input$outputformat=="Phenotypic traits only"){
       paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
       if(is.na(paramsOnlyRes[1,1])){
@@ -282,6 +316,23 @@ auth0::auth0_server(function(input,output,session ){
       uploadData("paramsOnlyRes")
     }
     
+    #------------Custom Ouput-----------
+    if(input$outputformat=="Custom"){
+     customRes <- dbGetQuery(conn = con,statement = CustomQuery)
+      if(is.na(customRes[1,1])){
+        output$resText<-renderText({
+          HTML(paste("Your filters don't match any spectrums in the database.",
+                     "Please retry with less specific criteria", sep="\n "))
+        })
+      } else {
+        output$resText<-renderText({
+          return(paste("Your filters matches ",nrow(CustomQuery)," of 5325 spectra",sep = ""))
+        })
+      }
+      write.table(customRes,file="customRes.csv",sep = ";",row.names = FALSE)
+      show("DlConsult")
+      uploadData("CustomQuery")
+    }
     #write.table(res,file="rawRes.csv",sep = ";",row.names = FALSE)
     print('Traitement terminé')
     dbDisconnect(con)
@@ -437,6 +488,18 @@ auth0::auth0_server(function(input,output,session ){
     )
   }
   
+  #####Custom options toggle button#####
+  isshowed<<-FALSE;
+  observeEvent(input$outputformat, {
+    if(input$outputformat == "Custom"){
+      toggle(id="customoptions")
+      isshowed<<-TRUE;
+    }
+    if(input$outputformat != "Custom" && isshowed == TRUE){
+      toggle(id="customoptions")
+      isshowed<<-FALSE;
+    }
+  })
   
   ######LAUNCH RUN########
   observeEvent(input$runAnalysis, {

@@ -1,0 +1,2 @@
+"x"
+"SELECT DISTINCT individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage, leaf_stage,type_sample,measurement,leaf_status,dateexp,plant_lifespan ,SLA, LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX,CSR_S,CSR_C,CSR_R,xylose  FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE   individual.treatment IN ('WaterStress/LowTemperature') and  dateexp BETWEEN '2016-01-01' and '2022-05-24' ORDER BY individual_id"
