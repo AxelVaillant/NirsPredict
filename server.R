@@ -215,8 +215,8 @@ auth0::auth0_server(function(input,output,session ){
         otherFilterFinal<-paste(otherFilterFinal,otherFilterList,sep = "")
       }
     }
-    otherFilterFinal<-substr(otherFilterFinal,1,nchar(otherFilterFinal)-1)
-    if(otherFilterFinal != ""){
+    if(!is.null(otherFilterFinal)){
+      otherFilterFinal<-substr(otherFilterFinal,1,nchar(otherFilterFinal)-1)
       customSelect<-paste(basicParameters,",",otherFilterFinal,sep = "")
     } else {
       customSelect<-basicParameters
@@ -424,7 +424,10 @@ auth0::auth0_server(function(input,output,session ){
     req(input$spectrumfile)
     inFile <- input$spectrumfile
     if(is.null(inFile)){
-      return(FALSE)
+      shinyalert("Input missing", "File is null",type="error")
+    } else if(ncol(inFile)!=2151){
+      shinyalert("Column Error", "There should be 2151 Columns",type="error")
+      reset('spectrumfile')
     } else {
       #----------Connect to GPU----------------
       sessionGpu<-ssh_connect("vaillant@10.8.5.143",passwd = "clm!dpd!av!")
@@ -443,6 +446,7 @@ auth0::auth0_server(function(input,output,session ){
         
         #-----------Get output files------------ --
         scp_download(sessionGpu,"NirsDataUpl.csv", to = "www")
+        show('DlSpectrum')
         
       } else if (input$runMode == "Create new model + Predictions"){
         
@@ -455,6 +459,7 @@ auth0::auth0_server(function(input,output,session ){
         
         #-----------Get output files------------ --
         scp_download(sessionGpu,"NirsDataUpl.csv", to = "Results")
+        show('DlSpectrum')
       }
       
       #-----------Disconnect-----------------
@@ -503,7 +508,8 @@ auth0::auth0_server(function(input,output,session ){
   
   ######LAUNCH RUN########
   observeEvent(input$runAnalysis, {
-    
+      inFile <- input$spectrumfile
+      if(!is.null(inFile)){
   #observeEvent(input$runAnalysis, {
   #email_user<- values$auth0_user_data$email
   #  system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
@@ -529,18 +535,28 @@ auth0::auth0_server(function(input,output,session ){
     'Cet email est automatisé. Merci de ne pas y répondre.'
   )
   #sendmail(from,to,Subject,TextPart,control=Server)
+      } else {
+        shinyalert("Input missing", "No input fil has been provided",type="error")
+      }
   })
 
 
   #######OUTPUTS##########
   # all pca plot
-  output$allPCAPlot <- renderPlot({
-    newtabAll<-read.table(file="newtabAll.csv",header=TRUE,sep=";")
-    phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
-    spectre<-newtabAll[,2:2152]
-    #AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
-    #fviz_pca_ind(AllDataPca,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")
+  
+  bigPlot<-eventReactive(input$submit,{
+    future_promise({
+      newtabAll<-read.table(file="newtabAll.csv",header=TRUE,sep=";")
+      phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
+      spectre<-newtabAll[,2:2152]
+      AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
+    })
   })
+  
+  #output$allPCAPlot <- renderPlot({
+    #bigPlot() %...>% {fviz_pca_ind(.,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")}
+  #})
+    
 
   
   #access to the app from the homepage link

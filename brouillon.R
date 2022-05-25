@@ -424,6 +424,8 @@ testtable<-cbind(SLA,b)
 write.table(testtable,"testtable.csv",col.names = TRUE,row.names=FALSE,sep=";")
 
 write.table(SLA,"SLA2.csv",col.names = FALSE,row.names=FALSE,sep=";")
+SLA3<-SLA[,2:2152]
+write.table(SLA3,"SLA3.csv",col.names = FALSE,row.names=FALSE,sep=";")
 
 write.table(SLA[1:5,],"SLAmini.csv",col.names = FALSE,row.names=FALSE,sep=";")
 

@@ -51,7 +51,7 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model","Create new model + Predictions"))),
                                                                           column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models will take several hours."))))),
                                                                  actionButton("runAnalysis","Run"),
-                                                                 tableOutput("spectrum"),downloadButton('DlSpectrum', label="Download")),
+                                                                 tableOutput("spectrum"),shinyjs::hidden(downloadButton('DlSpectrum', label="Download"))),
                                                                  wellPanel(span("Prediction with our models can be imprecise due to specific conditions of your samples. \n
                                                                                                 In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=2),column(width=6,img(src = "GenotypeByPosCustom2.png", width = '100%', height = "auto"))
                                                       ),
