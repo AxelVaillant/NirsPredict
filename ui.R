@@ -55,7 +55,7 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                  wellPanel(span("Prediction with our models can be imprecise due to specific conditions of your samples. \n
                                                                                                 In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=2),column(width=6,img(src = "GenotypeByPosCustom2.png", width = '100%', height = "auto"))
                                                       ),
-                                                      tabPanel("Consult Database",fluidRow(column(width =4,
+                                                      tabPanel("Consult Database",column(width =4,
                                                                #INFOS GENERAL###############
                                                                p(""),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
@@ -86,14 +86,15 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                                                                              column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
                                                                                                                     ##2EME LIGNE
                                                                                                                     fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
-                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE)))))))),
+                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE))))))),
                                                                column(width=8,column(width=11,plotOutput('MeanPlot',height=600),
                                                                #column(width=6,img(src = "AllSpectraPCA.png")),
                                                                (column(width=6,plotOutput('allPCAPlot',height =500))),
                                                               column(width=6,plotOutput('selectedPCAPlot',height =500)))))),
                                                       
-                                                      tabPanel("Become Contributor",
-                                                               p(""),
+                                                      tabPanel("Become Contributor",column(width = 6,p(""),
+                                                      wellPanel(p("We will examine your dataset and maybe use your data to extend our database."),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
+                                                                actionButton("sendContribution","Send")))
                                                       ))
                                                       ))
                 ),

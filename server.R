@@ -54,23 +54,6 @@ auth0::auth0_server(function(input,output,session ){
     
   
   ############# ####DATABASE MANAGER##########################
-  options(mysql = list(
-    "host" = "127.0.0.1",
-    "port" = 3306,
-    "user" = "root",
-    "password" = ""
-  ))
-  nirsdb <- "nirsdb"
-
-  
-  loadData <- function(data) {
-    # Construct the fetching query
-    query <- sprintf("SELECT * FROM %s", data)
-    # Submit the fetch query and disconnect
-    data <- dbGetQuery(con, query)
-    dbDisconnect(con)
-    data
-  }
                 
   #################################################
   ########      QUERY SELECT INPUT      ###########
@@ -425,7 +408,9 @@ auth0::auth0_server(function(input,output,session ){
     inFile <- input$spectrumfile
     if(is.null(inFile)){
       shinyalert("Input missing", "File is null",type="error")
-    } else if(ncol(inFile)!=2151){
+    } else {
+      data<-read.table(inFile$datapath,sep=";")
+     if(ncol(data)!=2151){
       shinyalert("Column Error", "There should be 2151 Columns",type="error")
       reset('spectrumfile')
     } else {
@@ -467,10 +452,9 @@ auth0::auth0_server(function(input,output,session ){
     }
     if(dir.exists(destDir)){
       result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
-    } else {
-      result<- FALSE
+      shinyalert("Success", "Run started, an email has been sent to you",type="success")
     }
-    result
+    }
   })
   #####PREDICTIONS DOWNLOAD HANDLING
   output$DlSpectrum <- downloadHandler(
@@ -558,6 +542,23 @@ auth0::auth0_server(function(input,output,session ){
   #})
     
 
+  #########CONTRIBUTOR PAGE################
+  contribDir<-'/home/vaillant/Documents/Projets R/RShinyNirsDB/contribution'
+observeEvent(input$sendContribution,{
+    contribFile <- input$contributorfile
+    if(is.null(contribFile)){
+      shinyalert("Input missing", "File is null",type="error")
+    } else{
+      data<-read.table(contribFile$datapath,header = TRUE,sep = ";")
+       if(ncol(data)!=2151){
+      shinyalert("Column Error", "There should be 2151 Columns",type="error")
+      reset('contributorfile')
+    } else if(dir.exists(contribDir)){
+      result<- file.copy(contribFile$datapath,file.path(contribDir,contribFile$name))
+      shinyalert("Success", "Dataset has been sent",type="success")
+      reset('contributorfile')}
+    }
+})
   
   #access to the app from the homepage link
   observeEvent(input$app, updateTabsetPanel(session = session, inputId = "tabset", selected = "app"))
