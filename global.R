@@ -24,4 +24,5 @@ library(jsonlite)
 library(future)
 library(promises)
 library(shinyalert)
+library(shinycssloaders)
 

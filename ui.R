@@ -24,7 +24,7 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                            .navbar-default .navbar-nav > .active > a:hover {color: #000000; background-color: #6AF32A;}
                            .well {background-color: #82E780;}
                                 pre{color:red;background-color:#fbf65e;}')),
-                tags$head(tags$link(rel="shortcut icon", href="/www/favicon.ico")),
+                tags$head(tags$link(href="/www/favicon.ico")),
                 navbarPage(title = "NirsDB", id = "tabset", 
                            tabPanel("Home page",
                                     
@@ -51,7 +51,7 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model","Create new model + Predictions"))),
                                                                           column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models will take several hours."))))),
                                                                  actionButton("runAnalysis","Run"),
-                                                                 tableOutput("spectrum"),shinyjs::hidden(downloadButton('DlSpectrum', label="Download"))),
+                                                                 shinyjs::hidden(downloadButton('DlSpectrum', label="Download"))),
                                                                  wellPanel(span("Prediction with our models can be imprecise due to specific conditions of your samples. \n
                                                                                                 In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=2),column(width=6,img(src = "GenotypeByPosCustom2.png", width = '100%', height = "auto"))
                                                       ),
@@ -86,11 +86,11 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                                                                              column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
                                                                                                                     ##2EME LIGNE
                                                                                                                     fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
-                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE))))))),
-                                                               column(width=8,column(width=11,plotOutput('MeanPlot',height=600),
+                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE)))))))),
+                                                               shinyjs::hidden(div(id="plotsOutput",column(width=8,column(width=11,withSpinner(plotOutput('MeanPlot',height=600)),
                                                                #column(width=6,img(src = "AllSpectraPCA.png")),
-                                                               (column(width=6,plotOutput('allPCAPlot',height =500))),
-                                                              column(width=6,plotOutput('selectedPCAPlot',height =500)))))),
+                                                               (column(width=6,withSpinner(plotOutput('allPCAPlot',height =500)))),
+                                                              column(width=6,withSpinner(plotOutput('selectedPCAPlot',height =500)))))))),
                                                       
                                                       tabPanel("Become Contributor",column(width = 6,p(""),
                                                       wellPanel(p("We will examine your dataset and maybe use your data to extend our database."),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),

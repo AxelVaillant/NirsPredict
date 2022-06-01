@@ -90,6 +90,7 @@ auth0::auth0_server(function(input,output,session ){
   
   ################FORM MANAGER####################
   observeEvent(input$submit, {
+    show("plotsOutput")
     # Connect to the database
     con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     
@@ -403,8 +404,7 @@ auth0::auth0_server(function(input,output,session ){
   
   ###UPLOAD HANDLING
   destDir<-'/home/vaillant/Documents/Projets R/RShinyNirsDB/uploads'
-  output$spectrum <- renderPrint({
-    req(input$spectrumfile)
+  observeEvent(input$runAnalysis,{
     inFile <- input$spectrumfile
     if(is.null(inFile)){
       shinyalert("Input missing", "File is null",type="error")
@@ -423,14 +423,14 @@ auth0::auth0_server(function(input,output,session ){
       if(input$runMode == "Predictions using our model"){
         
         #-----------Transfer spectrum file-------
-        file.path<-"uploads/NirsDataUpl.csv"
+        file.path<-inFile$datapath
         scp_upload(sessionGpu,file.path)
         #-----------Execute python script--------
         ssh_exec_internal(sessionGpu,"python runtest.py")
         
         
         #-----------Get output files------------ --
-        scp_download(sessionGpu,"NirsDataUpl.csv", to = "www")
+        scp_download(sessionGpu,"/home/vaillant/SLAScripts/out/pred_valid/BACON_SLA3mini_filt1_fold0_prediction.csv", to = "Results")
         show('DlSpectrum')
         
       } else if (input$runMode == "Create new model + Predictions"){
@@ -449,6 +449,7 @@ auth0::auth0_server(function(input,output,session ){
       
       #-----------Disconnect-----------------
       ssh_disconnect(sessionGpu)
+      reset('spectrumfile')
     }
     if(dir.exists(destDir)){
       result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
@@ -507,9 +508,9 @@ auth0::auth0_server(function(input,output,session ){
   
   to<-values$auth0_user_data$email
   
-  system(
-    paste("Rscript --vanilla run.R",to) , wait = FALSE
-  )
+ # system(
+  #  paste("Rscript --vanilla run.R",to) , wait = FALSE
+  #)
   
   Subject = paste0("[NirsDB] Le calcul des prédictions de votre spectre a démarré.")
   TextPart = paste0(
@@ -526,6 +527,7 @@ auth0::auth0_server(function(input,output,session ){
 
 
   #######OUTPUTS##########
+  
   # all pca plot
   
   bigPlot<-eventReactive(input$submit,{
@@ -555,6 +557,8 @@ observeEvent(input$sendContribution,{
       reset('contributorfile')
     } else if(dir.exists(contribDir)){
       result<- file.copy(contribFile$datapath,file.path(contribDir,contribFile$name))
+      email_user<- values$auth0_user_data$email
+      system(paste("Rscript --vanilla newContribution.R",email_user),wait = FALSE)
       shinyalert("Success", "Dataset has been sent",type="success")
       reset('contributorfile')}
     }
