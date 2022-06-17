@@ -39,7 +39,6 @@ observeEvent(input$submit, {
   filterList<-sapply(filterList,paste,collapse=", ")
   filterList<- paste(filterList, collapse = " and ")
   filterList<-substr(filterList,5,nchar(filterList))
-  
   filterList1<- paste(filterList1, collapse = " and ")
   filterList1<-substr(filterList1,5,nchar(filterList1))
   
@@ -430,6 +429,12 @@ SLA3mini<-SLA3[1:5,]
 write.table(SLA3mini,"SLA3mini.csv",col.names = FALSE,row.names=FALSE,sep=";")
 write.table(SLA[1:5,],"SLAmini.csv",col.names = FALSE,row.names=FALSE,sep=";")
 
+write.table(SLA[1:100,1],"SLA100Y.csv",col.names = TRUE,row.names=FALSE,sep=";")
+
+read.table("Xcal.csv",col.names = FALSE,row.names=FALSE,sep=";")
+###SHAP######
+
+explainer = shap.DeepExplainer(model, x)
 
 
 

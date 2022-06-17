@@ -415,7 +415,7 @@ auth0::auth0_server(function(input,output,session ){
       reset('spectrumfile')
     } else {
       #----------Connect to GPU----------------
-      sessionGpu<-ssh_connect("vaillant@10.8.5.143",passwd = "clm!dpd!av!")
+      sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
       print(sessionGpu)
       #ssh_exec_internal(sessionGpu,"mkdir dirtest")
       #ssh_exec_internal(sessionGpu,"rm -rf dirtest")
@@ -423,27 +423,50 @@ auth0::auth0_server(function(input,output,session ){
       if(input$runMode == "Predictions using our model"){
         
         #-----------Transfer spectrum file-------
+        ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
         file.path<-inFile$datapath
         scp_upload(sessionGpu,file.path)
         #-----------Execute python script--------
-        ssh_exec_internal(sessionGpu,"python runtest.py")
-        
+        ssh_exec_wait(sessionGpu,"bash /home/vaillant/Documents/setup.sh")
+
         
         #-----------Get output files------------ --
-        scp_download(sessionGpu,"/home/vaillant/SLAScripts/out/pred_valid/BACON_SLA3mini_filt1_fold0_prediction.csv", to = "Results")
+        #path<-"/home/vaillant/SLAScripts/out/pred_valid/"
+        #files<-c(paste0(path,"BACON_0_filt1_fold0_prediction.csv"),paste0(path,"BACON_0_filt1_fold1_prediction.csv"),paste0(path,"BACON_0_filt1_fold2_prediction.csv"))
+        #scp_download(sessionGpu,files, to = "Results")
+      
+        #---Predictions results---#
+        scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
+        #---Graphs---#
+        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
+        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
+        
+        system(paste("Rscript --vanilla sendResults.R",values$auth0_user_data$email),wait = FALSE)
         show('DlSpectrum')
         
       } else if (input$runMode == "Create new model + Predictions"){
         
         #-----------Transfer spectrum file-------
-        file.path<-"uploads/NirsDataUpl.csv"
+        #-----------Transfer spectrum file-------
+        ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
+        file.path<-inFile$datapath
         scp_upload(sessionGpu,file.path)
         #-----------Execute python script--------
-        ssh_exec_internal(sessionGpu,"python runtest.py")
+        ssh_exec_wait(sessionGpu,"bash /home/vaillant/Documents/setup.sh")
         
         
         #-----------Get output files------------ --
-        scp_download(sessionGpu,"NirsDataUpl.csv", to = "Results")
+        #path<-"/home/vaillant/SLAScripts/out/pred_valid/"
+        #files<-c(paste0(path,"BACON_0_filt1_fold0_prediction.csv"),paste0(path,"BACON_0_filt1_fold1_prediction.csv"),paste0(path,"BACON_0_filt1_fold2_prediction.csv"))
+        #scp_download(sessionGpu,files, to = "Results")
+        
+        #---Predictions results---#
+        scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
+        #---Graphs---#
+        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
+        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
+        
+        system(paste("Rscript --vanilla sendResults.R",values$auth0_user_data$email),wait = FALSE)
         show('DlSpectrum')
       }
       

@@ -9,3 +9,5 @@ allSpectra.csv
 6-NIRS_Metada_Fit.csv
 resAll.csv
 runtest.py
+Results/
+contribution/
