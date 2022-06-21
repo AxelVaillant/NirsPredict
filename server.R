@@ -425,22 +425,15 @@ auth0::auth0_server(function(input,output,session ){
         #-----------Transfer spectrum file-------
         ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
         file.path<-inFile$datapath
-        scp_upload(sessionGpu,file.path)
+        scp_upload(sessionGpu,file.path,to="/home/vaillant/Documents")
         #-----------Execute python script--------
+        ssh_exec_wait(sessionGpu,"mv /home/vaillant/Documents/0.csv /home/vaillant/Documents/Xcal1.csv")
         ssh_exec_wait(sessionGpu,"bash /home/vaillant/Documents/setup.sh")
-
         
         #-----------Get output files------------ --
-        #path<-"/home/vaillant/SLAScripts/out/pred_valid/"
-        #files<-c(paste0(path,"BACON_0_filt1_fold0_prediction.csv"),paste0(path,"BACON_0_filt1_fold1_prediction.csv"),paste0(path,"BACON_0_filt1_fold2_prediction.csv"))
-        #scp_download(sessionGpu,files, to = "Results")
-      
-        #---Predictions results---#
-        scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
-        #---Graphs---#
-        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
-        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
-        
+        path<-"/home/vaillant/Documents/Res"
+        scp_download(sessionGpu,path, to = "Results")
+        #-----------Send results by email-------#
         system(paste("Rscript --vanilla sendResults.R",values$auth0_user_data$email),wait = FALSE)
         show('DlSpectrum')
         
@@ -450,22 +443,15 @@ auth0::auth0_server(function(input,output,session ){
         #-----------Transfer spectrum file-------
         ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
         file.path<-inFile$datapath
-        scp_upload(sessionGpu,file.path)
+        scp_upload(sessionGpu,file.path,to="/home/vaillant/Documents")
         #-----------Execute python script--------
+        ssh_exec_wait(sessionGpu,"mv /home/vailllant/Documents/0.csv /home/vaillant/Documents/Xcal1.csv")
         ssh_exec_wait(sessionGpu,"bash /home/vaillant/Documents/setup.sh")
         
-        
         #-----------Get output files------------ --
-        #path<-"/home/vaillant/SLAScripts/out/pred_valid/"
-        #files<-c(paste0(path,"BACON_0_filt1_fold0_prediction.csv"),paste0(path,"BACON_0_filt1_fold1_prediction.csv"),paste0(path,"BACON_0_filt1_fold2_prediction.csv"))
-        #scp_download(sessionGpu,files, to = "Results")
-        
-        #---Predictions results---#
-        scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
-        #---Graphs---#
-        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
-        #scp_download(sessionGpu,"/home/vaillant/Documents/output.csv", to = "Results")
-        
+        path<-"/home/vaillant/Documents/Res"
+        scp_download(sessionGpu,path, to = "Results")
+        #-----------Send results by email-------#
         system(paste("Rscript --vanilla sendResults.R",values$auth0_user_data$email),wait = FALSE)
         show('DlSpectrum')
       }
