@@ -53,7 +53,7 @@ auth0::auth0_ui(fluidRow(useShinyjs(),
                                                                  actionButton("runAnalysis","Run"),
                                                                  shinyjs::hidden(downloadButton('DlSpectrum', label="Download"))),
                                                                  wellPanel(span("Prediction with our models can be imprecise due to specific conditions of your samples. \n
-                                                                                                In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=2),column(width=6,img(src = "GenotypeByPosCustom2.png", width = '100%', height = "auto"))
+                                                                                                In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=3,p(""),img(src="stats.png", width='100%', height='auto')),column(width=5,img(src = "map.png", width = '100%', height = "auto"))
                                                       ),
                                                       tabPanel("Consult Database",column(width =4,
                                                                #INFOS GENERAL###############

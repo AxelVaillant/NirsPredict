@@ -7,7 +7,7 @@ email_user <- args[1]
 #sender_email <- Sys.getenv("SENDER_EMAIL")
 api_key <- "19bfd6c40901eeb0229f4657bab053be"
 api_secret <- "79f50ec2e26b3b74374e83ab4fe0ffe5"
-sender_email <- "axel.vaillant@cefe.cnrs.fr"
+sender_email <- "nirsdb@post.com"
 print(api_key)
 print(api_secret)
 print(sender_email)

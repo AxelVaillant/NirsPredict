@@ -7,11 +7,24 @@ email_user <- args[1]
 #sender_email <- Sys.getenv("SENDER_EMAIL")
 api_key <- "19bfd6c40901eeb0229f4657bab053be"
 api_secret <- "79f50ec2e26b3b74374e83ab4fe0ffe5"
-sender_email <- "axel.vaillant@cefe.cnrs.fr"
+sender_email <- "nirsdb@post.com"
 print(api_key)
 print(api_secret)
 print(sender_email)
 
+###### Get all contribution files ######
+# Write zip file
+
+files <- list.files(file.path("contribution"), full.names = TRUE)
+tryCatch(zip(
+  zipfile = file.path("contribution"), 
+  flags = "-r9X", 
+  files = files
+))
+
+report_base64 <- base64enc::base64encode(
+  file.path("contribution.zip")
+)
 
 send_email <- httr::POST(
   url = "https://api.mailjet.com/v3.1/send",
@@ -48,6 +61,13 @@ send_email <- httr::POST(
             'Une contribution à été soumisse à l’outil NirsDB.<br><br>',
             'La contribution provient de l’utilisateur ',email_user,'.\n\n',
             '<i>Cet email est automatisé. Merci de ne pas y répondre.</i>'
+          ),
+          Attachments = list(
+            list(
+              ContentType = "application/zip",
+              Filename = "contribution.zip",
+              Base64Content = report_base64
+            )
           )
         )
       )

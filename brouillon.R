@@ -432,6 +432,22 @@ write.table(SLA[1:5,],"SLAmini.csv",col.names = FALSE,row.names=FALSE,sep=";")
 write.table(SLA[1:100,1],"SLA100Y.csv",col.names = TRUE,row.names=FALSE,sep=";")
 
 read.table("Xcal.csv",col.names = FALSE,row.names=FALSE,sep=";")
+Carac<-as.data.frame(cbind(X6_NIRS_Metadata_Fit$SLA_mm2_mg,X6_NIRS_Metadata_Fit$delta13C,X6_NIRS_Metadata_Fit$LDMC_mg_g,
+                           X6_NIRS_Metadata_Fit$Thickness_microm,
+         X6_NIRS_Metadata_Fit$Plant_Lifespan,X6_NIRS_Metadata_Fit$CMLX_ng_gFW,X6_NIRS_Metadata_Fit$LNC_perc,X6_NIRS_Metadata_Fit$ABA_ng_gFW,
+         X6_NIRS_Metadata_Fit$JA_ng_gFW,X6_NIRS_Metadata_Fit$Plant_Growth_rate))
+titre<-as.data.frame(cbind("SLA","delta13C","LDMC","Thickness","Lifespan","CMLX","LNC","ABA","JA","Growth_rate"))
+Ycal<-rbind(titre,Carac[1700:1799,])
+write.table(Ycal,"Ycal.csv",col.names = FALSE,row.names=FALSE,sep=";")
+Xcal17<-b[1700:1799,]
+write.table(Xcal17,"Xcal17.csv",col.names = TRUE,row.names=FALSE,sep=";")
+
+Ycal17<-Ycal[2:101,]
+Ycal17<-cbind(Ycal17[,1:4],Ycal17[,7],Ycal17[,10])
+AllInOne<-cbind(Ycal17,Xcal17)
+names(AllInOne)[1:10] <- c("SLA","delta13C","LDMC","Thickness","Lifespan","CMLX","LNC","ABA","JA","Growth_rate")
+write.table(AllInOne,"AllInOne.csv",col.names = TRUE,row.names=FALSE,sep=";")
+
 ###SHAP######
 
 explainer = shap.DeepExplainer(model, x)

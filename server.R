@@ -440,7 +440,6 @@ auth0::auth0_server(function(input,output,session ){
       } else if (input$runMode == "Create new model + Predictions"){
         
         #-----------Transfer spectrum file-------
-        #-----------Transfer spectrum file-------
         ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
         file.path<-inFile$datapath
         scp_upload(sessionGpu,file.path,to="/home/vaillant/Documents")
@@ -504,32 +503,12 @@ auth0::auth0_server(function(input,output,session ){
   observeEvent(input$runAnalysis, {
       inFile <- input$spectrumfile
       if(!is.null(inFile)){
-  #observeEvent(input$runAnalysis, {
-  #email_user<- values$auth0_user_data$email
-  #  system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
-  #})
- 
-  ######EMAIL#############
-  Server<-list(smtpServer<-"in-v3.mailjet.com")
-  from<- "axel.vaillant@cefe.cnrs.fr"
-  #to<- "axel.vaillant@yahoo.fr"
-  #to <- session$userData$auth0_info$name
-  
-  to<-values$auth0_user_data$email
-  
- # system(
-  #  paste("Rscript --vanilla run.R",to) , wait = FALSE
-  #)
-  
-  Subject = paste0("[NirsDB] Le calcul des prédictions de votre spectre a démarré.")
-  TextPart = paste0(
-    'Bonjour,\n\n',
-    'L’outil NirsDB a démarré le calcul de prédictions lié à votre spectre. ',
-    'Vous recevrez un email sous 24-48 heures avec les résultats.\n\n',
-    'Cet email est automatisé. Merci de ne pas y répondre.'
-  )
-  #sendmail(from,to,Subject,TextPart,control=Server)
-      } else {
+  observeEvent(input$runAnalysis, {
+  email_user<- values$auth0_user_data$email
+  system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
+  })
+
+              } else {
         shinyalert("Input missing", "No input fil has been provided",type="error")
       }
   })
@@ -548,9 +527,9 @@ auth0::auth0_server(function(input,output,session ){
     })
   })
   
-  #output$allPCAPlot <- renderPlot({
-    #bigPlot() %...>% {fviz_pca_ind(.,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")}
-  #})
+  output$allPCAPlot <- renderPlot({
+    bigPlot() %...>% {fviz_pca_ind(.,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")}
+  })
     
 
   #########CONTRIBUTOR PAGE################
