@@ -6,7 +6,6 @@ library(FactoMineR)
 library(factoextra)
 library(ade4)
 library(auth0)
-library(sendmailR)
 auth0::auth0_server(function(input,output,session ){
   
   values <- reactiveValues(
@@ -407,13 +406,20 @@ auth0::auth0_server(function(input,output,session ){
   observeEvent(input$runAnalysis,{
     inFile <- input$spectrumfile
     if(is.null(inFile)){
-      shinyalert("Input missing", "File is null",type="error")
+      shinyalert("Input missing", "No file has been provided",type="error")
     } else {
       data<-read.table(inFile$datapath,sep=";")
      if(ncol(data)!=2151){
       shinyalert("Column Error", "There should be 2151 Columns",type="error")
       reset('spectrumfile')
-    } else {
+      runjs('Shiny.onInputChange("spectrumfile", null)')
+    } else {    
+      if(dir.exists(destDir)){
+      result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
+      email_user<- values$auth0_user_data$email
+      system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
+      shinyalert("Success", "Run started, an email has been sent to you",type="success")
+    }
       #----------Connect to GPU----------------
       sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
       print(sessionGpu)
@@ -458,12 +464,7 @@ auth0::auth0_server(function(input,output,session ){
       #-----------Disconnect-----------------
       ssh_disconnect(sessionGpu)
       reset('spectrumfile')
-    }
-    if(dir.exists(destDir)){
-      result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
-      shinyalert("Success", "Run started, an email has been sent to you",type="success")
-    }
-    }
+    }}
   })
   #####PREDICTIONS DOWNLOAD HANDLING
   output$DlSpectrum <- downloadHandler(
@@ -498,22 +499,6 @@ auth0::auth0_server(function(input,output,session ){
       isshowed<<-FALSE;
     }
   })
-  
-  ######LAUNCH RUN########
-  observeEvent(input$runAnalysis, {
-      inFile <- input$spectrumfile
-      if(!is.null(inFile)){
-  observeEvent(input$runAnalysis, {
-  email_user<- values$auth0_user_data$email
-  system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
-  })
-
-              } else {
-        shinyalert("Input missing", "No input fil has been provided",type="error")
-      }
-  })
-
-
   #######OUTPUTS##########
   
   # all pca plot
