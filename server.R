@@ -1,12 +1,8 @@
-library(shiny)
-library(RPostgreSQL)
-library(RPostgres)
-library(ggplot2)
-library(FactoMineR)
-library(factoextra)
-library(ade4)
 plan(multisession)
 function(input,output,session ){
+  #-------Create unique temporary repository---------------------#
+  system(paste("mkdir ",session$token,sep = ""))
+  
   ############# ####DATABASE MANAGER##########################
   
   #################################################
@@ -206,8 +202,6 @@ function(input,output,session ){
       #-----------Get spectrum res-----------------#
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       dbDisconnect(con)
-      #-------Create unique temporary repository---------------------#
-      system(paste("mkdir ",session$token,sep = ""))
       #--------Asynchronous way to filter and plot the results-------#
       future({
         return(FormatData(res))
@@ -217,9 +211,6 @@ function(input,output,session ){
           outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
           meanPlot(newtab)
           pcaSelectedPlot()
-        })%>% then(function(){
-          #Delete temporary repository
-          system(paste("rm -Rf ",session$token,sep = ""))
         })%...!% ( function(error){
           warning(error)
         })
@@ -231,13 +222,12 @@ function(input,output,session ){
     withProgress(message='Plot management ouput',value=0,{
     con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     ###########WRITING CSV OUTPUT#######################
+    incProgress(1/4, detail = paste("in progress"))
+    paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
+    write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
+    write.table(newtab,file=paste(session$token,"/selectedSpectrums.csv",sep =""),sep=";",row.names = FALSE)
     #----------All Data Output----------------
     if(input$outputformat=="All Data"){
-      
-      incProgress(1/4, detail = paste("in progress"))
-      paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
-      write.table(newtab,file=paste(session$token,"/selectedSpectrums.csv",sep =""),sep=";",row.names = FALSE)
-      write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
       if(is.na(res[1,1])){
         output$resText<-renderText({
           HTML(paste("Your filters don't match any spectrums in the database.",
@@ -265,13 +255,11 @@ function(input,output,session ){
           return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
         })
       }
-      write.table(newtab,file=paste(session$token,"/selectedSpectrums.csv",sep =""),sep=";",row.names = FALSE)
       show("DlConsult")
       uploadData("selectedSpectrums")
     }
     #---------All Phenotypic traits only Output-------
     if(input$outputformat=="Phenotypic traits only"){
-      paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
       if(is.na(paramsOnlyRes[1,1])){
         output$resText<-renderText({
           HTML(paste("Your filters don't match any spectrums in the database.",
@@ -282,7 +270,6 @@ function(input,output,session ){
           return(paste("Your filters matches ",nrow(paramsOnlyRes)," of 5325 spectra",sep = ""))
         })
       }
-      write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
       show("DlConsult")
       uploadData("paramsOnlyRes")
     }
@@ -297,12 +284,12 @@ function(input,output,session ){
         })
       } else {
         output$resText<-renderText({
-          return(paste("Your filters matches ",nrow(CustomQuery)," of 5325 spectra",sep = ""))
+          return(paste("Your filters matches ",nrow(customRes)," of 5325 spectra",sep = ""))
         })
       }
-      write.table(customRes,ffile=paste(session$token,"/customRes.csv",sep=""),sep = ";",row.names = FALSE)
+      write.table(customRes,file=paste(session$token,"/customRes.csv",sep=""),sep = ";",row.names = FALSE)
       show("DlConsult")
-      uploadData("CustomQuery")
+      uploadData("customRes")
     }
       dbDisconnect(con)
     })
@@ -329,7 +316,6 @@ function(input,output,session ){
       newtab<- rbind(newtab, sub2)
       print(i)
       progress$inc(1/(nrow(res)/2151))
-      #incProgress(1/(nrow(res)/2151), detail = paste("Doing part", i,'/',nrow(res)/2151))
     }
     return(newtab)
   }
@@ -337,7 +323,6 @@ function(input,output,session ){
   ###########UNIVARIATE PLOT METHOD########
   plotMean<-function(newtab){
     allSpectrum<-read.table(file = "csv/allSpectrum.csv",header = TRUE,sep = ";")
-    #newtab<-read.table(file = "csv/selectedSpectrums.csv",header = TRUE,sep = ";")
     if(!is.na(newtab[1,1])){
       selecSpectrum <- as.data.frame(matrix(double(),ncol = 2))
       
@@ -359,7 +344,6 @@ function(input,output,session ){
       c<-cbind(c,wavelength)
       name<-as.factor(rep(c("Individual","All"),each=2151))
       rdyToPlot<-data.frame(c,name)
-      #write.table(rdyToPlot,file=paste(session$token,"/rdyToPlot.csv",sep=""),sep=";",row.names = FALSE)
       #####PLOT######
       plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1.2),
            main="Mean comparison",xlab="Wavelength",ylab="Absorption")
@@ -417,7 +401,6 @@ function(input,output,session ){
   }
   ###OPTIONS
   options(encoding = "UTF-8")
-  #output$spectrum <- renderTable(input$upload)
   options(shiny.maxRequestSize=1000*1024^2)
   
   ###UPLOAD CHECKING
@@ -627,7 +610,7 @@ function(input,output,session ){
         paste("SelectedSpectrums-", Sys.Date(), ".csv", sep="")
       },
       content = function(file) {
-        file.copy(paste(outputname,".csv",sep = ""),file)
+        file.copy(paste(session$token,"/",outputname,".csv",sep = ""),file)
       }
     )
   }
@@ -749,4 +732,8 @@ function(input,output,session ){
   #access to the app from the homepage link
   observeEvent(input$app, updateTabsetPanel(session = session, inputId = "tabset", selected = "app"))
   
+  #Delete temporary repository
+    session$onSessionEnded(function() {
+    system(paste("rm -Rf ",session$token,sep = ""))
+  })
 }

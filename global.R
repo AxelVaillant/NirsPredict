@@ -1,5 +1,3 @@
-options(shiny.port = 8080) # Necessary for auth0 callback URLs
-
 # ------ Initialisation --------------------------------------------------------
 
 
@@ -12,10 +10,6 @@ library(ggplot2)
 library(FactoMineR)
 library(factoextra)
 library(ade4)
-#library(auth0)
-#library(sendmailR)
-#library(sf)
-#library(rnaturalearth)
 library(shinyjs)
 library(ssh)
 library(httr)
