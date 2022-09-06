@@ -5,59 +5,13 @@ library(ggplot2)
 library(FactoMineR)
 library(factoextra)
 library(ade4)
-library(auth0)
-auth0::auth0_server(function(input,output,session ){
-  
-  values <- reactiveValues(
-    auth0_user_data = NULL #Cntain auth0 user data
-  )
-  #----Logout-------
-  observeEvent( input$logout,{
-    logout()
-  })
-  
-  # ------ Auth0: Fetch a token ------------------------------------------------
-  response <- httr::POST(
-    url = paste0("https://nirsdb.eu.auth0.com/oauth/token"),
-    body = paste0(
-      '{"client_id":"', "W6zILNzpDYWDFI37ca6Bqvx5l5Wa8v0t", 
-      '","client_secret":"',"zTX_vlx6DMJv_YDcKHoyJma9gqnuWanZPe_JWXfZ3CddDcVzIQELe3wftSrFrxdH", 
-      '","audience":"https://nirsdb.eu.auth0.com/api/v2/"', 
-      ',"grant_type":"client_credentials"}'
-    ),
-    httr::add_headers(
-      `content-type` = "application/json"
-    ),
-    encode = "raw"
-  )
-
-  token <- jsonlite::fromJSON(rawToChar(response$content))
-  
-  # ------ Check account approval ----------------------------------------------
-  observe({
-    req(session$userData$auth0_info)
-    #token<-session$userData$auth0_credentials
-    request_user <- httr::GET(
-      url = paste0(
-        "https://nirsdb.eu.auth0.com/api/v2/users/", 
-        session$userData$auth0_info$sub
-      ),
-      httr::add_headers(
-        Authorization = paste(token$token_type, token$access_token)
-      )
-    )
-    user_data <- jsonlite::fromJSON(rawToChar(request_user$content))
-    values$auth0_user_data <- user_data
-  })
-    
-    
-  
+plan(multisession)
+function(input,output,session ){
   ############# ####DATABASE MANAGER##########################
-                
+  
   #################################################
   ########      QUERY SELECT INPUT      ###########
   #################################################
-  getData <- function(){
     # Connect to the database
     con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     
@@ -70,7 +24,7 @@ auth0::auth0_server(function(input,output,session ){
         assign(paste("SqlOutput",i,sep=""),dbGetQuery(con, query))
         
       }
-        
+      
       updatePickerInput(session, "location", choices = SqlOutputexp_location)
       updatePickerInput(session, "exp", choices = SqlOutputidexp)
       updatePickerInput(session, "contributor", choices = SqlOutputmain_contributor)
@@ -84,15 +38,9 @@ auth0::auth0_server(function(input,output,session ){
       
       dbDisconnect(con)
     })
-  }
-  getData()
   
-  ################FORM MANAGER####################
-  observeEvent(input$submit, {
-    show("plotsOutput")
-    # Connect to the database
-    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
-    
+  
+  dbManagement <- function(){
     inputList<-list(input$location,input$exp,input$contributor,input$genotype,input$genetic_group,
                     input$condition,input$leaf_stage,input$plant_stage,input$measurement,input$treatment,
                     input$CSR,input$sugar,input$glucosinolates,input$secondary_metabolites)
@@ -143,17 +91,17 @@ auth0::auth0_server(function(input,output,session ){
     leafattach<-NULL
     nataccessions<-NULL
     if((!input$situation == "Both") || (!input$leafAttach == "Both") || (!input$nataccessions == "Included")){
-    if(!input$situation=="Both"){
-      situation<-paste(" indout = '",input$situation,"'",sep="")
-    }
-    if(!input$leafAttach=="Both"){
-      leafattach<-paste(" leaf_status = '",input$leafAttach,"'",sep="")
-    }
-    if(input$nataccessions == "Only"){
-      nataccessions<-paste(" genotype IS NULL",sep="")
+      if(!input$situation=="Both"){
+        situation<-paste(" indout = '",input$situation,"'",sep="")
       }
-    if(input$nataccessions == "Excluded"){
-      nataccessions<-paste(" genotype !=''",sep="")
+      if(!input$leafAttach=="Both"){
+        leafattach<-paste(" leaf_status = '",input$leafAttach,"'",sep="")
+      }
+      if(input$nataccessions == "Only"){
+        nataccessions<-paste(" genotype IS NULL",sep="")
+      }
+      if(input$nataccessions == "Excluded"){
+        nataccessions<-paste(" genotype !=''",sep="")
       }
       if(!is.null(situation) && is.null(leafattach) && is.null(nataccessions)){
         filterListFinal<-paste(c(filterListFinal,situation),collapse=" and ")
@@ -175,7 +123,7 @@ auth0::auth0_server(function(input,output,session ){
       }
     }
     
-  
+    
     if(filterList1 == ""){
       filterListFinal<-substr(filterListFinal,5,nchar(filterListFinal))
       filterListFinal<-paste("WHERE",filterListFinal)
@@ -194,7 +142,7 @@ auth0::auth0_server(function(input,output,session ){
         for(j in 1:length(inputList[[i]])){
           otherFilterList<-paste(otherFilterList,inputList[[i]][j],",",sep ="")
         }
-       
+        
         otherFilterFinal<-paste(otherFilterFinal,otherFilterList,sep = "")
       }
     }
@@ -204,19 +152,19 @@ auth0::auth0_server(function(input,output,session ){
     } else {
       customSelect<-basicParameters
     }
-
+    
     ######SELECT CONDITION###########"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
     parametersSelect <-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
-    "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
-    "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
-    "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",
-    "melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucorassicin , glucoerucin , ",
-    "gluconapin , gluconasturtiin , glucoraphanin , glucoraphenin , epigallocatechin , progoitrin , epiprogoitrin , isobutyl , glucosinalbin ,",
-    "sinigrin , hexyl , butyl , neoglucobrassicinPeak1 , neoglucobrasssicinPeak2 , X3MTP , X5MTP , X6MSH , X7MSH , X7MTH , X8MSO ,",
-    "X8MTO ,apigeninrutinoside , caffeicacid , chlorogenicacid , citrat , cyanidinRhamnoside , CyanidinSophorosidGlucoside , dihydroCaffeoylGlucuronide , ",
-    "Fumarat , KaempherolGlucosylRhamnosylGlucoside , KaempherolRutinoside , KaempherolXylosylRhamnoside , malat , mcourmaricacid , pcoumaricacid ,",
-    "pelargonidincumaroyldiglucoside , pelargonidinsambubioside , prenylnaringenin , quercetinglucoside , succinat,maltose",sep = "")
+                             "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
+                             "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
+                             "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",
+                             "melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucobrassicin , glucoerucin , ",
+                             "gluconapin , gluconasturtiin , glucoraphanin , glucoraphenin , epigallocatechin , progoitrin , epiprogoitrin , isobutyl , glucosinalbin ,",
+                             "sinigrin , hexyl , butyl , neoglucobrassicinPeak1 , neoglucobrassicinPeak2 , X3MTP , X5MTP , X6MSH , X7MSH , X7MTH , X8MSO ,",
+                             "X8MTO ,apigeninrutinoside , caffeicacid , chlorogenicacid , citrat , cyanidinRhamnoside , CyanidinSophorosidGlucoside , dihydroCaffeoylGlucuronide , ",
+                             "Fumarat , KaempherolGlucosylRhamnosylGlucoside , KaempherolRutinoside , KaempherolXylosylRhamnoside , malat , mcoumaricacid , pcoumaricacid ,",
+                             "pelargonidincumaroyldiglucoside , pelargonidinsambubioside , prenylnaringenin , quercetinglucoside , succinat,maltose",sep = "")
     
     if(filterList1==""){
       #SpectrumOnlyQuery
@@ -228,6 +176,7 @@ auth0::auth0_server(function(input,output,session ){
       #CustomParametersQuery
       CustomQuery<-paste("SELECT DISTINCT",customSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id  ",
                          filterListFinal,"ORDER BY individual_id" )
+      Queries <- list(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery)
     } else {
       #SpectrumOnlyQuery
       spectrumOnlyQuery<- paste("SELECT DISTINCT ",spectrumselect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
@@ -238,16 +187,57 @@ auth0::auth0_server(function(input,output,session ){
       #CustomParametersQuery
       CustomQuery<-paste("SELECT DISTINCT",customSelect," FROM SPECTRUM JOIN INDIVIDUAL ON spectrum.individual_id = individual.id WHERE ",
                          filterListFinal,"ORDER BY individual_id" )
+      Queries <- list(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery)
     }
-    newtab= data.frame()
+    return(Queries)
+  }
+  
+  ################FORM MANAGER - CONSULT DATABASE####################
+  observeEvent(input$submit, {
+    progress <- AsyncProgress$new(message="Filtering in progress")
+      show("plotsOutput")
+      # Connect to the database
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      #------Get Queries----------------------#
+      queries<-dbManagement()
+      spectrumOnlyQuery <-queries[[1]]
+      ParametersOnlyQuery <-queries[[2]]
+      CustomQuery <-queries[[3]]
+      #-----------Get spectrum res-----------------#
+      res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
+      dbDisconnect(con)
+      #-------Create unique temporary repository---------------------#
+      system(paste("mkdir ",session$token,sep = ""))
+      #--------Asynchronous way to filter and plot the results-------#
+      future({
+        return(FormatData(res))
+        progress$close()
+        }) %...>% (function(newtab){
+          progress$close()
+          outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
+          meanPlot(newtab)
+          pcaSelectedPlot()
+        })%>% then(function(){
+          #Delete temporary repository
+          system(paste("rm -Rf ",session$token,sep = ""))
+        })%...!% ( function(error){
+          warning(error)
+        })
+      print('Traitement terminé')
+  })
+  
+
+  outputManagement<- function(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res){
+    withProgress(message='Plot management ouput',value=0,{
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     ###########WRITING CSV OUTPUT#######################
     #----------All Data Output----------------
     if(input$outputformat=="All Data"){
-      res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
+      
+      incProgress(1/4, detail = paste("in progress"))
       paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
-      newtab <-FormatData(res)
-      write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
-      write.table(paramsOnlyRes,file="paramsOnlyRes.csv",sep = ";",row.names = FALSE)
+      write.table(newtab,file=paste(session$token,"/selectedSpectrums.csv",sep =""),sep=";",row.names = FALSE)
+      write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
       if(is.na(res[1,1])){
         output$resText<-renderText({
           HTML(paste("Your filters don't match any spectrums in the database.",
@@ -258,15 +248,13 @@ auth0::auth0_server(function(input,output,session ){
         output$resText<-renderText({
           return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
         })
-        write.table(allDataRes,file="allDataRes.csv",sep = ";",row.names = FALSE)
+        write.table(allDataRes,file=paste(session$token,"/allDataRes.csv",sep=""),sep = ";",row.names = FALSE)
         show("DlConsult")
         uploadData("allDataRes")
       }
     }
     #----------------Spectrum Only Output----------
     if(input$outputformat=="Spectrum only"){
-      res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
-      newtab <-FormatData(res)
       if(is.na(res[1,1])){
         output$resText<-renderText({
           HTML(paste("Your filters don't match any spectrums in the database.",
@@ -277,7 +265,7 @@ auth0::auth0_server(function(input,output,session ){
           return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
         })
       }
-      write.table(newtab,file="selectedSpectrums.csv",sep=";",row.names = FALSE)
+      write.table(newtab,file=paste(session$token,"/selectedSpectrums.csv",sep =""),sep=";",row.names = FALSE)
       show("DlConsult")
       uploadData("selectedSpectrums")
     }
@@ -294,14 +282,14 @@ auth0::auth0_server(function(input,output,session ){
           return(paste("Your filters matches ",nrow(paramsOnlyRes)," of 5325 spectra",sep = ""))
         })
       }
-      write.table(paramsOnlyRes,file="paramsOnlyRes.csv",sep = ";",row.names = FALSE)
+      write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
       show("DlConsult")
       uploadData("paramsOnlyRes")
     }
     
     #------------Custom Ouput-----------
     if(input$outputformat=="Custom"){
-     customRes <- dbGetQuery(conn = con,statement = CustomQuery)
+      customRes <- dbGetQuery(conn = con,statement = CustomQuery)
       if(is.na(customRes[1,1])){
         output$resText<-renderText({
           HTML(paste("Your filters don't match any spectrums in the database.",
@@ -312,15 +300,15 @@ auth0::auth0_server(function(input,output,session ){
           return(paste("Your filters matches ",nrow(CustomQuery)," of 5325 spectra",sep = ""))
         })
       }
-      write.table(customRes,file="customRes.csv",sep = ";",row.names = FALSE)
+      write.table(customRes,ffile=paste(session$token,"/customRes.csv",sep=""),sep = ";",row.names = FALSE)
       show("DlConsult")
       uploadData("CustomQuery")
     }
-    #write.table(res,file="rawRes.csv",sep = ";",row.names = FALSE)
-    print('Traitement terminé')
-    dbDisconnect(con)
-  })
-   ##############FORMATING RAWDATA TO USER READABLE DATA#############################
+      dbDisconnect(con)
+    })
+    }
+  
+  ##############FORMATING RAWDATA TO USER READABLE DATA#############################
   #####BASIC LOOP#####
   FormatData<- function(res){
     newtab=data.frame()
@@ -340,21 +328,25 @@ auth0::auth0_server(function(input,output,session ){
       end<-end+2151
       newtab<- rbind(newtab, sub2)
       print(i)
+      progress$inc(1/(nrow(res)/2151))
+      #incProgress(1/(nrow(res)/2151), detail = paste("Doing part", i,'/',nrow(res)/2151))
     }
-    return (newtab)
+    return(newtab)
   }
   
   ###########UNIVARIATE PLOT METHOD########
   plotMean<-function(newtab){
-    allSpectrum<-read.table(file = "allSpectrum.csv",header = TRUE,sep = ";")
-    newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
+    allSpectrum<-read.table(file = "csv/allSpectrum.csv",header = TRUE,sep = ";")
+    #newtab<-read.table(file = "csv/selectedSpectrums.csv",header = TRUE,sep = ";")
     if(!is.na(newtab[1,1])){
       selecSpectrum <- as.data.frame(matrix(double(),ncol = 2))
+      
       for(i in 350:2500){
         val<-paste('x',i,sep = "")
         absSelec<-newtab[,val]
         rowsel<-as.data.frame(cbind(mean(as.numeric(absSelec)),i))
         selecSpectrum<- rbind(selecSpectrum, rowsel)
+        incProgress(1/2150, detail = paste("Doing part", i))
       }
       
       absSelec<-selecSpectrum[,1]
@@ -367,7 +359,7 @@ auth0::auth0_server(function(input,output,session ){
       c<-cbind(c,wavelength)
       name<-as.factor(rep(c("Individual","All"),each=2151))
       rdyToPlot<-data.frame(c,name)
-      write.table(rdyToPlot,file="rdyToPlot.csv",sep=";",row.names = FALSE)
+      #write.table(rdyToPlot,file=paste(session$token,"/rdyToPlot.csv",sep=""),sep=";",row.names = FALSE)
       #####PLOT######
       plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1.2),
            main="Mean comparison",xlab="Wavelength",ylab="Absorption")
@@ -375,106 +367,259 @@ auth0::auth0_server(function(input,output,session ){
       legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
     }
   }
-
-  observeEvent(input$submit, {
-  ######UNIVARIATE GRAPHICAL OUTPUT#############
+  meanPlot<-function(newtab){
+    ######UNIVARIATE GRAPHICAL OUTPUT#############
     # mean plot
     output$MeanPlot <- renderPlot({
-      plotMean(newtab)
+      withProgress(message = 'Meanplot in progress', value=0, {
+        plotMean(newtab)
+        show('imgPCA')
+      })
     })
-    
-  ######MULTIVARIATE GRAPHICAL OUTPUT#############
+  }
+  pcaSelectedPlot<- function(){
+    withProgress(message = "Pca Plot in progress", value= 0,{
+      incProgress(1/4)
+    ######MULTIVARIATE GRAPHICAL OUTPUT#############
     # selected pca plot
     output$selectedPCAPlot <- renderPlot({
-      newtab<-read.table(file = "selectedSpectrums.csv",header = TRUE,sep = ";")
-      params<-read.table(file="paramsOnlyRes.csv",header=TRUE,sep=";")
+      newtab<-read.table(file=paste(session$token,"/selectedSpectrums.csv",sep =""),header = TRUE,sep = ";")
+      params<-read.table(file=paste(session$token,"/paramsOnlyRes.csv",sep=""),header=TRUE,sep=";")
       if(!is.na(newtab[1,1])){
         SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
         fviz_pca_ind(SelectedDataPca,gemo.ind="point",label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
       }
     })
-  })
+    })
+  }
+    
   
-  
+  #####DENSITY GRAPHIC COMPARISON#####
+  DensityComparison<- function(trait,mode){
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+    Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");
+    res <- dbGetQuery(conn = con,statement = Query)
+    dbDisconnect(con)
+    #-----#
+    #if(!is.null(mode) && mode == 1){
+    #  pred<-read.table(file=paste("Results/Res/output3.csv",sep = ""),header=FALSE,sep=";")
+    #} else {
+    pred<-read.table(file=paste("Results/Res/output3_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
+    #}
+    #-----#
+    d<-density(res[,1])
+    png(paste("Results/Res/density_comparaison",trait,".png",sep = ""))
+    #,xlab = paste(trait," value"
+    plot(d ,main=paste("Density of Database ",trait," vs Predicted ",trait,sep=""))
+    lines(density(pred[,1]), col="red")
+    legend("topright", c("Database values","Predictions values"), col = c("black","red"), lty=1)
+    dev.off()
+  }
   ###OPTIONS
   options(encoding = "UTF-8")
   #output$spectrum <- renderTable(input$upload)
   options(shiny.maxRequestSize=1000*1024^2)
   
-  ###UPLOAD HANDLING
-  destDir<-'/home/vaillant/Documents/Projets R/RShinyNirsDB/uploads'
-  observeEvent(input$runAnalysis,{
-    inFile <- input$spectrumfile
+  ###UPLOAD CHECKING
+  globalUploadCheck<-function(inFile,traitFile,destDir){
+    if(isTRUE(spectrumUploadCheck(inFile,destDir))){
+      if(input$runMode == "Multiple traits to predict"){
+        if(isTRUE(traitUploadCheck(traitFile,destDir))){
+          return(TRUE)
+        }
+      } else {
+        return(TRUE)
+      }
+    }
+  }
+  
+  traitUploadCheck<-function(traitFile,destDir){
+    traits <- c(input$functionalTraits,input$metabolites)
+    possibleTraits <- c(listFunctionalTraits,listSecondaryMetabolites,listHormones)
+    list=""
+    for(i in 1:length(possibleTraits)){
+      list<-paste(list,possibleTraits[i],sep=" ")
+    }
+    if(is.null(traitFile)){
+      shinyalert("Input missing", "No trait file has been provided", type="error")
+    } else {
+      data<-read.table(traitFile$datapath,sep=";")
+      if(any(is.na(data))){
+        shinyalert("Error missing data", "There are missing data in your dataset",type="error")
+        reset('traitsfile')
+        runjs('Shiny.onInputChange("traitsfile", null)')
+      } else {
+        for (i in 1:(length(traits)-1)) {
+          if(!(grepl(traits[i],list))){
+            shinyalert("Error wrong header", "Headers of your file doesn't match traits name",type="error")
+            reset('traitsfile')
+            runjs('Shiny.onInputChange("traitsfile", null)')
+          } else {
+            if(dir.exists(destDir)){
+              result<- file.copy(traitFile$datapath,file.path(destDir,traitFile$name))
+              return(TRUE)
+            }  
+          }
+        }
+      }
+    }
+  }
+  
+  spectrumUploadCheck<-function(inFile,destDir){
     if(is.null(inFile)){
-      shinyalert("Input missing", "No file has been provided",type="error")
+      shinyalert("Input missing", "No spectrum file has been provided",type="error")
     } else {
       data<-read.table(inFile$datapath,sep=";")
-     if(ncol(data)!=2151){
-      shinyalert("Column Error", "There should be 2151 Columns",type="error")
-      reset('spectrumfile')
-      runjs('Shiny.onInputChange("spectrumfile", null)')
-    } else {    
-      if(dir.exists(destDir)){
-      result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
-      email_user<- values$auth0_user_data$email
-      system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
-      shinyalert("Success", "Run started, an email has been sent to you",type="success")
-    }
-      #----------Connect to GPU----------------
-      sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
-      print(sessionGpu)
-      #ssh_exec_internal(sessionGpu,"mkdir dirtest")
-      #ssh_exec_internal(sessionGpu,"rm -rf dirtest")
-      
-      if(input$runMode == "Predictions using our model"){
-        
-        #-----------Transfer spectrum file-------
-        ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
-        file.path<-inFile$datapath
-        scp_upload(sessionGpu,file.path,to="/home/vaillant/Documents")
-        #-----------Execute python script--------
-        ssh_exec_wait(sessionGpu,"mv /home/vaillant/Documents/0.csv /home/vaillant/Documents/Xcal1.csv")
-        ssh_exec_wait(sessionGpu,"bash /home/vaillant/Documents/setup.sh")
-        
-        #-----------Get output files------------ --
-        path<-"/home/vaillant/Documents/Res"
-        scp_download(sessionGpu,path, to = "Results")
-        #-----------Send results by email-------#
-        system(paste("Rscript --vanilla sendResults.R",values$auth0_user_data$email),wait = FALSE)
-        show('DlSpectrum')
-        
-      } else if (input$runMode == "Create new model + Predictions"){
-        
-        #-----------Transfer spectrum file-------
-        ssh_exec_wait(sessionGpu,"cd /home/vaillant/Documents")
-        file.path<-inFile$datapath
-        scp_upload(sessionGpu,file.path,to="/home/vaillant/Documents")
-        #-----------Execute python script--------
-        ssh_exec_wait(sessionGpu,"mv /home/vailllant/Documents/0.csv /home/vaillant/Documents/Xcal1.csv")
-        ssh_exec_wait(sessionGpu,"bash /home/vaillant/Documents/setup.sh")
-        
-        #-----------Get output files------------ --
-        path<-"/home/vaillant/Documents/Res"
-        scp_download(sessionGpu,path, to = "Results")
-        #-----------Send results by email-------#
-        system(paste("Rscript --vanilla sendResults.R",values$auth0_user_data$email),wait = FALSE)
-        show('DlSpectrum')
+      if(any(is.na(data))){
+        shinyalert("Error missing data", "There are missing data in your dataset",type="error")
+        reset('spectrumfile')
+        runjs('Shiny.onInputChange("spectrumfile", null)')
+      } else if(ncol(data)!=2151){
+        shinyalert("Column Error", "There should be 2151 Columns",type="error")
+        reset('spectrumfile')
+        runjs('Shiny.onInputChange("spectrumfile", null)')
+      } else {    
+        if(dir.exists(destDir)){
+          result<- file.copy(inFile$datapath,file.path(destDir,inFile$name))
+          return(TRUE)
+        }
       }
-      
-      #-----------Disconnect-----------------
-      ssh_disconnect(sessionGpu)
-      reset('spectrumfile')
-    }}
+    }
+  }
+  
+  ###UPLOAD HANDLING
+  destDir<-'uploads'
+  observeEvent(input$runAnalysis,{
+    inFile <- input$spectrumfile
+    traitFile<- input$traitsfile
+    traits <- c(input$functionalTraits,input$metabolites)
+    mail <- get(paste(session$token,"-","mail",sep=""))
+    if(isTRUE(globalUploadCheck(inFile,traitFile,destDir))){
+      #system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
+      shinyalert("Run started","You will receive an email when the job is complete",type="success")
+        tryCatch({
+          if(input$runMode == "Predictions using our model"){
+            tryCatch({
+            future({
+              #----------Connect to GPU----------------
+              sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+              print(sessionGpu)
+              #-----------Transfer spectrum file-------
+              ssh_exec_wait(sessionGpu, command = c(
+                "cd /home/vaillant/Documents/pyNirs",
+                paste("mkdir ",session$token,sep = ""),
+                paste("mkdir ",session$token,"/Res",sep = ""),
+                paste("mkdir ",session$token,"/Temp",sep = "")
+              ))
+              file.path<-inFile$datapath
+              scp_upload(sessionGpu,file.path,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+              ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Xcal.csv",sep=""))
+              #-----------Execute python script--------
+              listTraits<-""
+              for (i in 1:length(traits)) {
+                listTraits<-paste(listTraits,traits[i],sep=" ")
+              }
+              outBash<-ssh_exec_internal(sessionGpu,paste("bash /home/vaillant/Documents/pyNirs/setup.sh 1 ",session$token,listTraits,sep=""))
+              outErr<-rawToChar(outBash$stderr)
+              if(grepl("out of memory",outErr)){
+                stop("Error : Out of memory error")
+              }
+              #-----------Get output files------------ --
+              path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
+              scp_download(sessionGpu,path, to = "Results")
+              ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
+              if(!is.null(traits[1])){
+                for (i in 1:length(traits)) {
+                  DensityComparison(traits[i],1)
+                }
+              }
+              #-----------Send results by email-------#
+              system(paste("Rscript --vanilla sendResults.R",mail),wait = FALSE)
+              #-----------Disconnect-----------------
+              ssh_disconnect(sessionGpu)
+            })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
+              return(NA)})
+              })
+            
+          } else if (input$runMode == "Create new model + Predictions"){
+            tryCatch({
+              future({
+              #----------Connect to GPU----------------
+              sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+              print(sessionGpu)
+              #-----------Transfer spectrum file-------
+              ssh_exec_wait(sessionGpu, command = c(
+                "cd /home/vaillant/Documents/pyNirs",
+                paste("mkdir ",session$token,sep = ""),
+                paste("mkdir ",session$token,"/Res",sep = ""),
+                paste("mkdir ",session$token,"/Temp",sep = "")
+              ))
+              file.path<-inFile$datapath
+              scp_upload(sessionGpu,file.path,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+              ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Xcal.csv",sep=""))
+              #-----------Execute python script--------
+              outBash<-ssh_exec_internal(sessionGpu,paste("bash /home/vaillant/Documents/pyNirs/setup.sh 2 ",session$token,sep=""))
+              outErr<-rawToChar(outBash$stderr)
+              if(grepl("out of memory",outErr)){
+                stop("Error : Out of memory error")
+              }
+              #-----------Get output files------------ --
+              path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
+              scp_download(sessionGpu,path, to = "Results")
+              ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
+              #-----------Send results by email-------#
+              system(paste("Rscript --vanilla sendResults.R",mail),wait = FALSE)
+              #-----------Disconnect-----------------
+              ssh_disconnect(sessionGpu)
+            })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
+              return(NA)})
+              }) 
+            } else if (input$runMode == "Multiple traits to predict"){
+            tryCatch({
+            future({
+              #----------Connect to GPU----------------
+              sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+              print(sessionGpu)
+              #-----------Transfer spectrum file-------
+              ssh_exec_wait(sessionGpu, command = c(
+                "cd /home/vaillant/Documents/pyNirs",
+                paste("mkdir ",session$token,sep = ""),
+                paste("mkdir ",session$token,"/Res",sep = ""),
+                paste("mkdir ",session$token,"/Temp",sep = "")
+              ))
+              file.path<-inFile$datapath
+              scp_upload(sessionGpu,file.path,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+              ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Xcal.csv",sep=""))
+              scp_upload(sessionGpu,traitFile$datapath,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+              ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Ycal.csv",sep=""))
+              #-----------Execute python script--------
+              outBash<-ssh_exec_internal(sessionGpu,paste("bash /home/vaillant/Documents/pyNirs/setup.sh 2 ",session$token,sep=""))
+              outErr<-rawToChar(outBash$stderr)
+              if(grepl("out of memory",outErr)){
+                stop("Error : Out of memory error")
+              }
+              #-----------Get output files------------ --
+              path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
+              scp_download(sessionGpu,path, to = "Results")
+              ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
+              if(!is.null(traits[1])){
+                for (i in 1:(length(traits))) {
+                  DensityComparison(traits[i],NULL)
+                }
+              }
+              #-----------Send results by email-------#
+              system(paste("Rscript --vanilla sendResults.R",mail),wait = FALSE)
+              #-----------Disconnect-----------------
+              ssh_disconnect(sessionGpu)
+            })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
+              return(NA)})
+              })
+          } 
+          reset('spectrumfile')
+        })
+    }
   })
-  #####PREDICTIONS DOWNLOAD HANDLING
-  output$DlSpectrum <- downloadHandler(
-    filename = function() {
-           paste("Predictions-", Sys.Date(), ".csv", sep="")
-         },
-         content = function(file) {
-           file.copy("uploads/NirsDataUpl.csv",file)
-         }
-  )
+  
   #####CONSULTATION DOWNLOAD HANDLING
   uploadData <- function(outputname) {
     output$DlConsult <- downloadHandler(
@@ -493,51 +638,115 @@ auth0::auth0_server(function(input,output,session ){
     if(input$outputformat == "Custom"){
       toggle(id="customoptions")
       isshowed<<-TRUE;
+      shinyjs::runjs("window.scrollTo(0, 2000)")
     }
     if(input$outputformat != "Custom" && isshowed == TRUE){
       toggle(id="customoptions")
       isshowed<<-FALSE;
     }
   })
+  
+  isshowedTraitInput<<-FALSE;
+  isshowedTestInputs<<-FALSE;
+  observeEvent(input$runMode, {
+    if(input$runMode != "Multiple traits to predict" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
+      toggle(id="inputTrait")
+      isshowedTraitInput<<-FALSE;
+    }
+    if(input$runMode == "Complete, Test dataset needed"){
+      toggle(id="inputDataTest")
+      isshowedTestInputs<<-TRUE;
+      toggle(id="inputTrait")
+      isshowedTraitInput<<-TRUE;
+    }
+    if(input$runMode != "Complete, Test dataset needed" && isshowedTestInputs == TRUE && isshowedTraitInput == TRUE ){
+      toggle(id="inputDataTest")
+      isshowedTestInputs<<-FALSE;
+      toggle(id="inputTrait")
+      isshowedTraitInput<<-FALSE;
+    }
+    if(input$runMode == "Multiple traits to predict" &&  isshowedTraitInput == FALSE){
+      toggle(id="inputTrait")
+      isshowedTraitInput<<-TRUE;
+    }
+  })
+
   #######OUTPUTS##########
   
   # all pca plot
   
-  bigPlot<-eventReactive(input$submit,{
-    future_promise({
-      newtabAll<-read.table(file="newtabAll.csv",header=TRUE,sep=";")
-      phenAll<-read.table(file="phenAll.csv",header=TRUE,sep=";")
-      spectre<-newtabAll[,2:2152]
-      AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
-    })
-  })
+  #bigPlot<-eventReactive(input$submit,{
+  # future_promise({
+  #  newtabAll<-read.table(file="csv/newtabAll.csv",header=TRUE,sep=";")
+  # phenAll<-read.table(file="csv/phenAll.csv",header=TRUE,sep=";")
+  #spectre<-newtabAll[,2:2152]
+  #AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
+  #incProgress(3/4,detail = paste("process finished"))
+  #})
+  #})
   
-  output$allPCAPlot <- renderPlot({
-    bigPlot() %...>% {fviz_pca_ind(.,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")}
+  #output$allPCAPlot <- renderPlot({
+  
+  #withProgress(message= 'Pca plot in progress..', value=0,{
+  #incProgress(1/4,detail = paste("this can take a while"))
+  #bigPlot() %...>% {fviz_pca_ind(.,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")}
+  #})
+  #})
+  #########TRAITS SELECTION#################
+  toListen <- reactive({
+    list(input$functionalTraits,input$metabolites)
   })
-    
-
+  observeEvent(toListen(),{
+    if(!is.null(input$functionalTraits[1]) || !is.null(input$metabolites[1])){
+      enable('Go')
+    } else {
+      disable('Go')
+    }
+  }, ignoreNULL = FALSE)
+  #########EMAIL HANDLER###################
+  observeEvent(input$Go,{
+    if(!input$mail=="" && isValidEmail(input$mail)){
+      assign(paste(session$token,"-","mail",sep=""),input$mail, envir = .GlobalEnv)
+      enable('runAnalysis')
+      disable('Go')
+    } else {
+      shinyalert("Invalid email", "Invalid email",type="error")
+    }
+  })
+  observeEvent(input$Gocontrib,{
+    if(!input$mailcontrib=="" && isValidEmail(input$mailcontrib)){
+      assign(paste(session$token,"-","mailContrib",sep=""),input$mailcontrib, envir = .GlobalEnv)
+      enable('sendContribution')
+      disable('Gocontrib') 
+    } else {
+      shinyalert("Invalid email", "Invalid email",type="error")
+    }
+  })
+  isValidEmail <- function(x) {
+    grepl("\\<[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\>", as.character(x), ignore.case=TRUE)
+  }
   #########CONTRIBUTOR PAGE################
-  contribDir<-'/home/vaillant/Documents/Projets R/RShinyNirsDB/contribution'
-observeEvent(input$sendContribution,{
+  observeEvent(input$sendContribution,{
+    system(paste("mkdir contribution/",session$token,sep = ""))
+    contribDir<-paste("contribution/",session$token,sep = "")
     contribFile <- input$contributorfile
+    mailContrib <- get(paste(session$token,"-","mailContrib",sep=""))
     if(is.null(contribFile)){
-      shinyalert("Input missing", "File is null",type="error")
+      shinyalert("Input missing", "No file has been provided",type="error")
     } else{
       data<-read.table(contribFile$datapath,header = TRUE,sep = ";")
-       if(ncol(data)!=2151){
-      shinyalert("Column Error", "There should be 2151 Columns",type="error")
-      reset('contributorfile')
-    } else if(dir.exists(contribDir)){
-      result<- file.copy(contribFile$datapath,file.path(contribDir,contribFile$name))
-      email_user<- values$auth0_user_data$email
-      system(paste("Rscript --vanilla newContribution.R",email_user),wait = FALSE)
-      shinyalert("Success", "Dataset has been sent",type="success")
-      reset('contributorfile')}
+      if(ncol(data)!=2151){
+        shinyalert("Column Error", "There should be 2151 Columns",type="error")
+        reset('contributorfile')
+      } else if(dir.exists(contribDir)){
+        result<- file.copy(contribFile$datapath,file.path(contribDir,contribFile$name))
+        system(paste("Rscript --vanilla newContribution.R",mailContrib,session$token),wait = FALSE)
+        shinyalert("Success", "Dataset has been sent",type="success")
+        reset('contributorfile')}
     }
-})
+  })
   
   #access to the app from the homepage link
   observeEvent(input$app, updateTabsetPanel(session = session, inputId = "tabset", selected = "app"))
   
-}, info = auth0_info)
+}

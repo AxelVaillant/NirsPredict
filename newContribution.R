@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 email_user <- args[1]
+session <- args[2]
 # ------ Send start email to user ----------------------------------------------
 #api_key <- Sys.getenv("MJ_APIKEY_PUBLIC")
 #api_secret <- Sys.getenv("MJ_APIKEY_SECRET")
@@ -15,15 +16,15 @@ print(sender_email)
 ###### Get all contribution files ######
 # Write zip file
 
-files <- list.files(file.path("contribution"), full.names = TRUE)
+files <- list.files(file.path(paste("contribution/",session,sep = "")), full.names = TRUE)
 tryCatch(zip(
-  zipfile = file.path("contribution"), 
+  zipfile = file.path(paste("contribution/",session,sep = "")), 
   flags = "-r9X", 
   files = files
 ))
 
 report_base64 <- base64enc::base64encode(
-  file.path("contribution.zip")
+  file.path(paste("contribution/",session,".zip",sep = ""))
 )
 
 send_email <- httr::POST(
@@ -75,3 +76,5 @@ send_email <- httr::POST(
     auto_unbox = TRUE
   )
 )
+system(paste("rm -Rf contribution/",session,sep = ""))
+system(paste("rm -Rf contribution/",session,".zip",sep = ""))

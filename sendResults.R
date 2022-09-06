@@ -79,3 +79,4 @@ send_email <- httr::POST(
   )
 )
 system(paste("rm runResults.zip"),wait = FALSE)
+system(paste("rm Results/Res/*"))
