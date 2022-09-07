@@ -10,9 +10,9 @@ function(input,output,session ){
   #################################################
     # Connect to the database
   #-local-#  
-  con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+  #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
   #-serveur-#
-   #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("PASSWORD"))
+  con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
   
     ######################INPUT UPDATE###########################
     observe({
@@ -197,9 +197,9 @@ function(input,output,session ){
       show("plotsOutput")
       # Connect to the database
       #-local-#  
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("PASSWORD"))
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
       #------Get Queries----------------------#
       queries<-dbManagement()
       spectrumOnlyQuery <-queries[[1]]
@@ -227,9 +227,9 @@ function(input,output,session ){
   outputManagement<- function(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res){
     withProgress(message='Plot management ouput',value=0,{
       #-local-#  
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("PASSWORD"))
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
     ###########WRITING CSV OUTPUT#######################
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
@@ -390,9 +390,9 @@ function(input,output,session ){
   #####DENSITY GRAPHIC COMPARISON#####
   DensityComparison<- function(trait,mode){
     #-local-#  
-    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+    #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     #-serveur-#
-    #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv('PASSWORD'))
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
     
     
     Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");
