@@ -10,9 +10,9 @@ function(input,output,session ){
   #################################################
     # Connect to the database
   #-local-#  
-  #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+  con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
   #-serveur-#
-   con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+   #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("PASSWORD"))
   
     ######################INPUT UPDATE###########################
     observe({
@@ -197,9 +197,9 @@ function(input,output,session ){
       show("plotsOutput")
       # Connect to the database
       #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("PASSWORD"))
       #------Get Queries----------------------#
       queries<-dbManagement()
       spectrumOnlyQuery <-queries[[1]]
@@ -227,9 +227,9 @@ function(input,output,session ){
   outputManagement<- function(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res){
     withProgress(message='Plot management ouput',value=0,{
       #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("PASSWORD"))
     ###########WRITING CSV OUTPUT#######################
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
@@ -390,21 +390,23 @@ function(input,output,session ){
   #####DENSITY GRAPHIC COMPARISON#####
   DensityComparison<- function(trait,mode){
     #-local-#  
-    #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     #-serveur-#
-    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+    #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv('PASSWORD'))
+    
+    
     Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");
     res <- dbGetQuery(conn = con,statement = Query)
     dbDisconnect(con)
     #-----#
     #if(!is.null(mode) && mode == 1){
-    #  pred<-read.table(file=paste("Results/Res/output3.csv",sep = ""),header=FALSE,sep=";")
+    #  pred<-read.table(file=paste(session$token,"/Res/output3.csv",sep = ""),header=FALSE,sep=";")
     #} else {
-    pred<-read.table(file=paste("Results/Res/output3_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
+    pred<-read.table(file=paste(session$token,"/Res/output3_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
     #}
     #-----#
     d<-density(res[,1])
-    png(paste("Results/Res/density_comparaison",trait,".png",sep = ""))
+    png(paste(session$token,"/Res/density_comparaison",trait,".png",sep = ""))
     #,xlab = paste(trait," value"
     plot(d ,main=paste("Density of Database ",trait," vs Predicted ",trait,sep=""))
     lines(density(pred[,1]), col="red")
@@ -521,7 +523,7 @@ function(input,output,session ){
               }
               #-----------Get output files------------ --
               path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
-              scp_download(sessionGpu,path, to = "Results")
+              scp_download(sessionGpu,path, to = session$token)
               ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
               if(!is.null(traits[1])){
                 for (i in 1:length(traits)) {
@@ -529,7 +531,7 @@ function(input,output,session ){
                 }
               }
               #-----------Send results by email-------#
-              system(paste("Rscript --vanilla sendResults.R",mail),wait = FALSE)
+              system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
               #-----------Disconnect-----------------
               ssh_disconnect(sessionGpu)
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
@@ -560,10 +562,10 @@ function(input,output,session ){
               }
               #-----------Get output files------------ --
               path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
-              scp_download(sessionGpu,path, to = "Results")
+              scp_download(sessionGpu,path, to = session$token)
               ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
               #-----------Send results by email-------#
-              system(paste("Rscript --vanilla sendResults.R",mail),wait = FALSE)
+              system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
               #-----------Disconnect-----------------
               ssh_disconnect(sessionGpu)
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
@@ -595,7 +597,7 @@ function(input,output,session ){
               }
               #-----------Get output files------------ --
               path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
-              scp_download(sessionGpu,path, to = "Results")
+              scp_download(sessionGpu,path, to = session$token)
               ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
               if(!is.null(traits[1])){
                 for (i in 1:(length(traits))) {
@@ -603,7 +605,7 @@ function(input,output,session ){
                 }
               }
               #-----------Send results by email-------#
-              system(paste("Rscript --vanilla sendResults.R",mail),wait = FALSE)
+              system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
               #-----------Disconnect-----------------
               ssh_disconnect(sessionGpu)
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")

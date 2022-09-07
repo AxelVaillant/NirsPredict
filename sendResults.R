@@ -1,10 +1,10 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 email_user <- args[1]
+session <- args[2]
 # ------ Send start email to user ----------------------------------------------
 #api_key <- Sys.getenv("MJ_APIKEY_PUBLIC")
 #api_secret <- Sys.getenv("MJ_APIKEY_SECRET")
-#sender_email <- Sys.getenv("SENDER_EMAIL")
 api_key <- "19bfd6c40901eeb0229f4657bab053be"
 api_secret <- "79f50ec2e26b3b74374e83ab4fe0ffe5"
 sender_email <- "nirsdb@post.com"
@@ -17,15 +17,15 @@ print(sender_email)
 ###### Get all ouput files ######
 # Write zip file
 
-files <- list.files(file.path("Results"), full.names = TRUE)
+files <- list.files(file.path(paste(session,"/Res",sep = "")), full.names = TRUE)
 tryCatch(zip(
-  zipfile = file.path("runResults"), 
+  zipfile = file.path(paste(session,"/Results",sep = "")), 
   flags = "-r9X", 
   files = files
 ))
 
 report_base64 <- base64enc::base64encode(
-  file.path("runResults.zip")
+  file.path(paste(session,"/Results",".zip",sep = ""))
 )
 
 ##########
@@ -68,7 +68,7 @@ send_email <- httr::POST(
           Attachments = list(
             list(
               ContentType = "application/zip",
-              Filename = "runResults.zip",
+              Filename = "Results.zip",
               Base64Content = report_base64
             )
           )
@@ -78,5 +78,5 @@ send_email <- httr::POST(
     auto_unbox = TRUE
   )
 )
-system(paste("rm runResults.zip"),wait = FALSE)
-system(paste("rm Results/Res/*"))
+system(paste("rm -Rf ",session,"/Res",sep = ""))
+system(paste("rm -Rf ",session,"/Results",".zip",sep = ""))
