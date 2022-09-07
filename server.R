@@ -1,21 +1,23 @@
 plan(multisession)
 function(input,output,session ){
-  #-------Create unique temporary repository---------------------#
-  system(paste("mkdir ",session$token,sep = ""))
-  
-  ############# ####DATABASE MANAGER##########################
-  
-  #################################################
-  ########      QUERY SELECT INPUT      ###########
-  #################################################
-    # Connect to the database
-  #-local-#  
-  #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
-  #-serveur-#
-  con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
-  
-    ######################INPUT UPDATE###########################
+    #-------Create unique temporary repository---------------------#
+    system(paste("mkdir ",session$token,sep = ""))
+    
+    ############# ####DATABASE MANAGER##########################
+    
+    #################################################
+    ########      QUERY SELECT INPUT      ###########
+    #################################################
+
+      ######################INPUT UPDATE###########################
     observe({
+      tryCatch({
+      # Connect to the database
+      #-local-#  
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      #-serveur-#
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+      
       listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
                          "measurement","plant_stage","treatment")
       for( i in listParams){
@@ -36,8 +38,9 @@ function(input,output,session ){
       updatePickerInput(session, "treatment", choices = SqlOutputtreatment)
       
       dbDisconnect(con)
+      },error=function(err){showNotification("Database connexion error",type="error")
+        return(NA)})
     })
-  
   
   dbManagement <- function(){
     inputList<-list(input$location,input$exp,input$contributor,input$genotype,input$genetic_group,
@@ -193,13 +196,14 @@ function(input,output,session ){
   
   ################FORM MANAGER - CONSULT DATABASE####################
   observeEvent(input$submit, {
+    tryCatch({
     progress <- AsyncProgress$new(message="Filtering in progress")
       show("plotsOutput")
       # Connect to the database
       #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
       #------Get Queries----------------------#
       queries<-dbManagement()
       spectrumOnlyQuery <-queries[[1]]
@@ -221,6 +225,10 @@ function(input,output,session ){
           warning(error)
         })
       print('Traitement terminé')
+      }, error = function(err){
+        shinyalert("Error", "Database consultation error\n Try again or contact us if the error persist",type="error")
+        return(NA)
+      })
   })
   
 
@@ -229,7 +237,7 @@ function(input,output,session ){
       #-local-#  
       #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
+      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
     ###########WRITING CSV OUTPUT#######################
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
@@ -392,7 +400,7 @@ function(input,output,session ){
     #-local-#  
     #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     #-serveur-#
-    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password=Sys.getenv("clm;dpd;av;"))
+    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
     
     
     Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");
@@ -487,6 +495,7 @@ function(input,output,session ){
   ###UPLOAD HANDLING
   destDir<-'uploads'
   observeEvent(input$runAnalysis,{
+    tryCatch({
     inFile <- input$spectrumfile
     traitFile<- input$traitsfile
     traits <- c(input$functionalTraits,input$metabolites)
@@ -494,7 +503,6 @@ function(input,output,session ){
     if(isTRUE(globalUploadCheck(inFile,traitFile,destDir))){
       #system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
-        tryCatch({
           if(input$runMode == "Predictions using our model"){
             tryCatch({
             future({
@@ -613,8 +621,8 @@ function(input,output,session ){
               })
           } 
           reset('spectrumfile')
-        })
-    }
+        }
+    })
   })
   
   #####CONSULTATION DOWNLOAD HANDLING
@@ -646,6 +654,7 @@ function(input,output,session ){
   isshowedTraitInput<<-FALSE;
   isshowedTestInputs<<-FALSE;
   observeEvent(input$runMode, {
+    tryCatch({
     if(input$runMode != "Multiple traits to predict" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
@@ -666,6 +675,8 @@ function(input,output,session ){
       toggle(id="inputTrait")
       isshowedTraitInput<<-TRUE;
     }
+    },error=function(err){showNotification("Error",type="error")
+      return(NA)})
   })
 
   #######OUTPUTS##########
@@ -724,6 +735,7 @@ function(input,output,session ){
   }
   #########CONTRIBUTOR PAGE################
   observeEvent(input$sendContribution,{
+    tryCatch({
     system(paste("mkdir contribution/",session$token,sep = ""))
     contribDir<-paste("contribution/",session$token,sep = "")
     contribFile <- input$contributorfile
@@ -741,6 +753,8 @@ function(input,output,session ){
         shinyalert("Success", "Dataset has been sent",type="success")
         reset('contributorfile')}
     }
+    },error=function(err){shinyalert("Error","Contribution error",type="error")
+      return(NA)})
   })
   
   #access to the app from the homepage link
