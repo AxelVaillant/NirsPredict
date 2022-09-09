@@ -19,7 +19,7 @@ library(shinyWidgets)
                                     
                                     fluidRow(column(width = 6, offset = 3,
                                                     wellPanel(align = "justify",class="homepage",
-                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0</i> </h1>"),
+                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0-Alpha</i> </h1>"),
                                                               br(),
                                                               HTML("<p> NirsDB is an application allowing to make predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum using deep-learning.
                                                               NirsDB has three functionalities : </p>
@@ -51,7 +51,7 @@ library(shinyWidgets)
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model","Create new model + Predictions","Multiple traits to predict","Complete, Test dataset needed")),
                                                                                  pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE))),
-                                                                          column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models will take several hours.")),
+                                                                          column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models can take a while.")),
                                                                                                 paste('<br>',p("Select some traits or/and metabolites to predict. Beware that the more you select the longer it will be."))))),
                                                                  fluidRow(column(width = 6,shinyjs::disabled(actionButton("runAnalysis","Run",icon("paper-plane"))),p(""),span("You must provide a valid email adress before launch so you can receive your run's results",style="color:red")),
                                                                           column(width=6,textInput('mail',"",placeholder="Enter a valid email adress"),actionButton("Go","Register")))),

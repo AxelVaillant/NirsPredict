@@ -426,10 +426,14 @@ function(input,output,session ){
   options(shiny.maxRequestSize=1000*1024^2)
   
   ###UPLOAD CHECKING
-  globalUploadCheck<-function(inFile,traitFile,destDir){
+  globalUploadCheck<-function(inFile,traitFile,testSpectrumFile,testTraitFile,destDir){
     if(isTRUE(spectrumUploadCheck(inFile,destDir))){
       if(input$runMode == "Multiple traits to predict"){
         if(isTRUE(traitUploadCheck(traitFile,destDir))){
+          return(TRUE)
+        }
+      } else if (input$runMode == "Complete, Test dataset needed"){
+        if(isTRUE(traitUploadCheck(testTraitFile,destDir)) && isTRUE(spectrumUploadCheck(testSpectrumFile,destDir))){
           return(TRUE)
         }
       } else {
@@ -497,10 +501,12 @@ function(input,output,session ){
   observeEvent(input$runAnalysis,{
     tryCatch({
     inFile <- input$spectrumfile
+    testSpectrumFile <- input$testSpectrumFile
     traitFile<- input$traitsfile
+    testTraitFile <- input$testTraitsFile
     traits <- c(input$functionalTraits,input$metabolites)
     mail <- get(paste(session$token,"-","mail",sep=""))
-    if(isTRUE(globalUploadCheck(inFile,traitFile,destDir))){
+    if(isTRUE(globalUploadCheck(inFile,traitFile,testSpectrumFile,testTraitFile,destDir))){
       #system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
           if(input$runMode == "Predictions using our model"){
@@ -619,7 +625,52 @@ function(input,output,session ){
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
               })
-          } 
+            } else if (input$runMode == "Complete, Test dataset needed"){
+              tryCatch({
+                future({
+                  #----------Connect to GPU----------------
+                  sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+                  print(sessionGpu)
+                  #-----------Transfer spectrum file-------
+                  ssh_exec_wait(sessionGpu, command = c(
+                    "cd /home/vaillant/Documents/pyNirs",
+                    paste("mkdir ",session$token,sep = ""),
+                    paste("mkdir ",session$token,"/Res",sep = ""),
+                    paste("mkdir ",session$token,"/Temp",sep = "")
+                  ))
+                  #---Calibration Dataset--#
+                  scp_upload(sessionGpu,inFile$datapath,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+                  ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Xcal.csv",sep=""))
+                  scp_upload(sessionGpu,traitFile$datapath,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+                  ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Ycal.csv",sep=""))
+                  #-Test Dataset-#
+                  scp_upload(sessionGpu,testSpectrumFile$datapath,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+                  ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Xval.csv",sep=""))
+                  scp_upload(sessionGpu,testTraitFile$datapath,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
+                  ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Yval.csv",sep=""))
+                  #-----------Execute python script--------
+                  outBash<-ssh_exec_internal(sessionGpu,paste("bash /home/vaillant/Documents/pyNirs/setup.sh 3 ",session$token,sep=""))
+                  outErr<-rawToChar(outBash$stderr)
+                  if(grepl("out of memory",outErr)){
+                    stop("Error : Out of memory error")
+                  }
+                  #-----------Get output files------------ --
+                  path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
+                  scp_download(sessionGpu,path, to = session$token)
+                  ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
+                  if(!is.null(traits[1])){
+                    for (i in 1:(length(traits))) {
+                      DensityComparison(traits[i],NULL)
+                    }
+                  }
+                  #-----------Send results by email-------#
+                  system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
+                  #-----------Disconnect-----------------
+                  ssh_disconnect(sessionGpu)
+                })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
+                  return(NA)})
+              })
+            } 
           reset('spectrumfile')
         }
     })
