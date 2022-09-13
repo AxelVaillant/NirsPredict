@@ -1,9 +1,11 @@
 # ------ Initialisation --------------------------------------------------------
 
-
 # ------Load packages ----------------------------------------------------------
-
 library(shiny)
+library(shinyalert)
+library(shinyWidgets)
+library(htmltools)
+library(htmlwidgets)
 library(RPostgreSQL)
 library(RPostgres)
 library(ggplot2)

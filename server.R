@@ -2,7 +2,7 @@ plan(multisession)
 function(input,output,session ){
     #-------Create unique temporary repository---------------------#
     system(paste("mkdir ",session$token,sep = ""))
-    
+  
     ############# ####DATABASE MANAGER##########################
     
     #################################################
@@ -16,7 +16,7 @@ function(input,output,session ){
       #-local-#  
       #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
       
       listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
                          "measurement","plant_stage","treatment")
@@ -198,12 +198,12 @@ function(input,output,session ){
   observeEvent(input$submit, {
     tryCatch({
     progress <- AsyncProgress$new(message="Filtering in progress")
-      show("plotsOutput")
+      shinyjs::show("plotsOutput")
       # Connect to the database
       #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915")
+      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
       #------Get Queries----------------------#
       queries<-dbManagement()
       spectrumOnlyQuery <-queries[[1]]
@@ -237,7 +237,7 @@ function(input,output,session ){
       #-local-#  
       #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
     ###########WRITING CSV OUTPUT#######################
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
@@ -256,7 +256,7 @@ function(input,output,session ){
           return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
         })
         write.table(allDataRes,file=paste(session$token,"/allDataRes.csv",sep=""),sep = ";",row.names = FALSE)
-        show("DlConsult")
+        shinyjs::show("DlConsult")
         uploadData("allDataRes")
       }
     }
@@ -272,7 +272,7 @@ function(input,output,session ){
           return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
         })
       }
-      show("DlConsult")
+      shinyjs::show("DlConsult")
       uploadData("selectedSpectrums")
     }
     #---------All Phenotypic traits only Output-------
@@ -287,7 +287,7 @@ function(input,output,session ){
           return(paste("Your filters matches ",nrow(paramsOnlyRes)," of 5325 spectra",sep = ""))
         })
       }
-      show("DlConsult")
+      shinyjs::show("DlConsult")
       uploadData("paramsOnlyRes")
     }
     
@@ -305,7 +305,7 @@ function(input,output,session ){
         })
       }
       write.table(customRes,file=paste(session$token,"/customRes.csv",sep=""),sep = ";",row.names = FALSE)
-      show("DlConsult")
+      shinyjs::show("DlConsult")
       uploadData("customRes")
     }
       dbDisconnect(con)
@@ -374,7 +374,7 @@ function(input,output,session ){
     output$MeanPlot <- renderPlot({
       withProgress(message = 'Meanplot in progress', value=0, {
         plotMean(newtab)
-        show('imgPCA')
+        shinyjs::show('imgPCA')
       })
     })
   }
@@ -400,7 +400,7 @@ function(input,output,session ){
     #-local-#  
     #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     #-serveur-#
-    con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="clm;dpd;av;")
+    con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
     
     
     Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");

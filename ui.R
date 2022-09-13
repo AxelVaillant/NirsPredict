@@ -1,5 +1,3 @@
-library(shiny)
-library(shinyWidgets)
   fluidRow(useShinyjs(),
                          #---prevent page reload to crash----
                          tagList( tags$head( tags$script(htmlwidgets::JS("setTimeout(function(){history.pushState({}, 'Page Title', '/');},2000);")))),
