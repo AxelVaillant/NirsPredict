@@ -19,7 +19,6 @@ library(jsonlite)
 library(future)
 library(promises)
 library(ipc)
-library(shinyalert)
 library(shinycssloaders)
 library(data.table)
 

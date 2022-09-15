@@ -13,8 +13,6 @@ function(input,output,session ){
     observe({
       tryCatch({
       # Connect to the database
-      #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
       
@@ -200,8 +198,6 @@ function(input,output,session ){
     progress <- AsyncProgress$new(message="Filtering in progress")
       shinyjs::show("plotsOutput")
       # Connect to the database
-      #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
       #------Get Queries----------------------#
@@ -213,29 +209,33 @@ function(input,output,session ){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       dbDisconnect(con)
       #--------Asynchronous way to filter and plot the results-------#
-      future({
-        return(FormatData(res))
-        progress$close()
-        }) %...>% (function(newtab){
-          progress$close()
-          outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
-          meanPlot(newtab)
-          pcaSelectedPlot()
-        })%...!% ( function(error){
-          warning(error)
-        })
-      print('Traitement terminé')
-      }, error = function(err){
-        shinyalert("Error", "Database consultation error\n Try again or contact us if the error persist",type="error")
-        return(NA)
+  #    future({
+  #      return(FormatData(res))
+  #      progress$close()
+  #      }) %...>% (function(newtab){
+  #        progress$close()
+  #        outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
+  #        meanPlot(newtab)
+  #        pcaSelectedPlot()
+  #      })%...!% ( function(error){
+  #        warning(error)
+  #      })
+  #    print('Traitement terminé')
+  #    }, error = function(err){
+  #      shinyalert("Error", "Database consultation error\n Try again or contact us if the error persist",type="error")
+  #      return(NA)
+      ##########################
+      newtab<-FormatData(res)
+      outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
+      meanPlot(newtab)
+      pcaSelectedPlot()
+      
       })
   })
   
 
   outputManagement<- function(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res){
     withProgress(message='Plot management ouput',value=0,{
-      #-local-#  
-      #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
       #-serveur-#
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
     ###########WRITING CSV OUTPUT#######################
@@ -332,7 +332,7 @@ function(input,output,session ){
       end<-end+2151
       newtab<- rbind(newtab, sub2)
       print(i)
-      progress$inc(1/(nrow(res)/2151))
+      #progress$inc(1/(nrow(res)/2151))
     }
     return(newtab)
   }
@@ -388,7 +388,7 @@ function(input,output,session ){
       params<-read.table(file=paste(session$token,"/paramsOnlyRes.csv",sep=""),header=TRUE,sep=";")
       if(!is.na(newtab[1,1])){
         SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
-        fviz_pca_ind(SelectedDataPca,gemo.ind="point",label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
+        fviz_pca_ind(SelectedDataPca,label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
       }
     })
     })
@@ -397,8 +397,6 @@ function(input,output,session ){
   
   #####DENSITY GRAPHIC COMPARISON#####
   DensityComparison<- function(trait,mode){
-    #-local-#  
-    #con <- dbConnect(RPostgres::Postgres(), dbname = "postgres", host="localhost",port="5432",user="postgres",password="Sonysilex915@")
     #-serveur-#
     con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
     
@@ -511,7 +509,7 @@ function(input,output,session ){
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
           if(input$runMode == "Predictions using our model"){
             tryCatch({
-            future({
+            #future({
               #----------Connect to GPU----------------
               sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
               print(sessionGpu)
@@ -550,7 +548,7 @@ function(input,output,session ){
               ssh_disconnect(sessionGpu)
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
-              })
+              #})
             
           } else if (input$runMode == "Create new model + Predictions"){
             tryCatch({
@@ -587,7 +585,7 @@ function(input,output,session ){
               }) 
             } else if (input$runMode == "Multiple traits to predict"){
             tryCatch({
-            future({
+            #future({
               #----------Connect to GPU----------------
               sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
               print(sessionGpu)
@@ -622,12 +620,13 @@ function(input,output,session ){
               system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
               #-----------Disconnect-----------------
               ssh_disconnect(sessionGpu)
-            })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
-              return(NA)})
-              })
+            })
+              #%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
+              #return(NA)})
+              #})
             } else if (input$runMode == "Complete, Test dataset needed"){
               tryCatch({
-                future({
+                #future({
                   #----------Connect to GPU----------------
                   sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
                   print(sessionGpu)
@@ -669,7 +668,7 @@ function(input,output,session ){
                   ssh_disconnect(sessionGpu)
                 })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
                   return(NA)})
-              })
+              #})
             } 
           reset('spectrumfile')
         }

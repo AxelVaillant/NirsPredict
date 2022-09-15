@@ -1,6 +1,6 @@
-  fluidRow(useShinyjs(),
+fluidRow(useShinyjs(),
                          #---prevent page reload to crash----
-                         tagList( tags$head( tags$script(htmlwidgets::JS("setTimeout(function(){history.pushState({}, 'Page Title', '/');},2000);")))),
+                         #tagList( tags$head( tags$script(htmlwidgets::JS("setTimeout(function(){history.pushState({}, 'Page Title', '/');},2000);")))),
   bootstrapPage('',
                 tags$style(type="text/css",
                            HTML('.navbar {background-color: #50C21B; font-size: 18px;}
@@ -39,12 +39,12 @@
                                                       tabsetPanel(
                                                         tabPanel("Submit Spectrum",column(width =4,
                                                                  p(""),wellPanel(span("The submited file must have headers",style="color:red"),
-                                                                 fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
-                                                                 shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv'))))),
+                                                                 fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
+                                                                 shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))))),
                                                                  
                                                                  
-                                                                 shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv'))),
-                                                                                     column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')))))),
+                                                                 shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
+                                                                                     column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')))))),
                                                                  
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model","Create new model + Predictions","Multiple traits to predict","Complete, Test dataset needed")),
                                                                                  pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
@@ -93,7 +93,7 @@
                                                               column(width=6,withSpinner(plotOutput('selectedPCAPlot',height =500)))))))),
                                                       
                                                       tabPanel("Become Contributor",column(width = 6,p(""),
-                                                      wellPanel(p("We will examine your dataset and maybe use your data to extend our database."),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values,tet/plain','.csv')),
+                                                      wellPanel(p("We will examine your dataset and maybe use your data to extend our database."),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
                                                                 fluidRow(column(width=4,shinyjs::disabled(actionButton("sendContribution","Send")),p(""),span("You must provide a valid email adress before send so we can ask you further informations if your data is relevant",style="color:red")),
                                                                          column(width=8,textInput('mailcontrib',"",placeholder="Enter a valid email adress"),actionButton("Gocontrib","Register")))))
                                                       ))
