@@ -209,26 +209,21 @@ function(input,output,session ){
       res <- dbGetQuery(conn = con,statement = spectrumOnlyQuery)
       dbDisconnect(con)
       #--------Asynchronous way to filter and plot the results-------#
-  #    future({
-  #      return(FormatData(res))
-  #      progress$close()
-  #      }) %...>% (function(newtab){
-  #        progress$close()
-  #        outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
-  #        meanPlot(newtab)
-  #        pcaSelectedPlot()
-  #      })%...!% ( function(error){
-  #        warning(error)
-  #      })
-  #    print('Traitement terminé')
-  #    }, error = function(err){
-  #      shinyalert("Error", "Database consultation error\n Try again or contact us if the error persist",type="error")
-  #      return(NA)
-      ##########################
-      newtab<-FormatData(res)
-      outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
-      meanPlot(newtab)
-      pcaSelectedPlot()
+      future({
+        return(FormatData(res))
+        progress$close()
+        }) %...>% (function(newtab){
+          progress$close()
+          outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
+          meanPlot(newtab)
+          pcaSelectedPlot()
+        })%...!% ( function(error){
+          warning(error)
+        })
+      print('Traitement terminé')
+      }, error = function(err){
+        shinyalert("Error", "Database consultation error\n Try again or contact us if the error persist",type="error")
+        return(NA)
       })
   })
   
@@ -331,7 +326,7 @@ function(input,output,session ){
       end<-end+2151
       newtab<- rbind(newtab, sub2)
       print(i)
-      #progress$inc(1/(nrow(res)/2151))
+      progress$inc(1/(nrow(res)/2151))
     }
     return(newtab)
   }
@@ -386,7 +381,7 @@ function(input,output,session ){
       newtab<-read.table(file=paste(session$token,"/selectedSpectrums.csv",sep =""),header = TRUE,sep = ";")
       params<-read.table(file=paste(session$token,"/paramsOnlyRes.csv",sep=""),header=TRUE,sep=";")
       if(!is.na(newtab[1,1])){
-        SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=TRUE)
+        SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=FALSE)
         fviz_pca_ind(SelectedDataPca,label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
       }
     })
@@ -508,7 +503,7 @@ function(input,output,session ){
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
           if(input$runMode == "Predictions using our model"){
             tryCatch({
-            #future({
+            future({
               #----------Connect to GPU----------------
               sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
               print(sessionGpu)
@@ -547,7 +542,7 @@ function(input,output,session ){
               ssh_disconnect(sessionGpu)
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
-              #})
+              })
             
           } else if (input$runMode == "Create new model + Predictions"){
             tryCatch({
@@ -584,7 +579,7 @@ function(input,output,session ){
               }) 
             } else if (input$runMode == "Multiple traits to predict"){
             tryCatch({
-            #future({
+            future({
               #----------Connect to GPU----------------
               sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
               print(sessionGpu)
@@ -619,13 +614,12 @@ function(input,output,session ){
               system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
               #-----------Disconnect-----------------
               ssh_disconnect(sessionGpu)
-            })
-              #%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
-              #return(NA)})
-              #})
+            })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
+              return(NA)})
+              })
             } else if (input$runMode == "Complete, Test dataset needed"){
               tryCatch({
-                #future({
+                future({
                   #----------Connect to GPU----------------
                   sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
                   print(sessionGpu)
@@ -667,7 +661,7 @@ function(input,output,session ){
                   ssh_disconnect(sessionGpu)
                 })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
                   return(NA)})
-              #})
+              })
             } 
           reset('spectrumfile')
         }
@@ -727,28 +721,7 @@ function(input,output,session ){
     },error=function(err){showNotification("Error",type="error")
       return(NA)})
   })
-
-  #######OUTPUTS##########
   
-  # all pca plot
-  
-  #bigPlot<-eventReactive(input$submit,{
-  # future_promise({
-  #  newtabAll<-read.table(file="csv/newtabAll.csv",header=TRUE,sep=";")
-  # phenAll<-read.table(file="csv/phenAll.csv",header=TRUE,sep=";")
-  #spectre<-newtabAll[,2:2152]
-  #AllDataPca<-dudi.pca(spectre,center=T,scale=T,nf=5,scannf=FALSE)
-  #incProgress(3/4,detail = paste("process finished"))
-  #})
-  #})
-  
-  #output$allPCAPlot <- renderPlot({
-  
-  #withProgress(message= 'Pca plot in progress..', value=0,{
-  #incProgress(1/4,detail = paste("this can take a while"))
-  #bigPlot() %...>% {fviz_pca_ind(.,gemo.ind="point",label="none",col.ind = "grey",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,9))+ylim(-100,100 )+ggtitle("All spectra PCA")}
-  #})
-  #})
   #########TRAITS SELECTION#################
   toListen <- reactive({
     list(input$functionalTraits,input$metabolites)
