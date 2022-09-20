@@ -229,7 +229,6 @@ function(input,output,session ){
       outputManagement(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res)
       meanPlot(newtab)
       pcaSelectedPlot()
-      
       })
   })
   
