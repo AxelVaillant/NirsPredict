@@ -680,6 +680,14 @@ function(input,output,session ){
     )
   }
   
+  #####Application Manual download######
+    output$manual <- downloadHandler(
+      filename = "Manual.pdf",
+      content = function(file) {
+        file.copy("Manual.pdf",file)
+      }
+    )
+  
   #####Custom options toggle button#####
   isshowed<<-FALSE;
   observeEvent(input$outputformat, {

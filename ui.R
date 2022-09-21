@@ -34,19 +34,19 @@ fluidRow(useShinyjs(),
                            tabPanel("Application", value="app",
                                     fluidPage(
                                       
-                                      p("NirsDB Application"),
+                                      fluidRow(column(width=1,p("NirsDB Application")),column(width=1,downloadButton('manual', label="Download application manual",style='padding:4px; font-size:80%;'))),
                                       fluidRow(
                                                       tabsetPanel(
                                                         tabPanel("Submit Spectrum",column(width =4,
-                                                                 p(""),wellPanel(span("The submited file must have headers",style="color:red"),
-                                                                 fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
-                                                                 shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))))),
-                                                                 
-                                                                 
+                                                                 p(""),wellPanel(span("Submitted files must have headers",style="color:red"), p("\n Download and consult the application manual above to get more details on input format and functionnalities")),
+                                                                 wellPanel(fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
+                                                                           shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))))),
                                                                  shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
                                                                                      column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')))))),
                                                                  
-                                                                 fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model","Create new model + Predictions","Multiple traits to predict","Complete, Test dataset needed")),
+                                                                 fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model",
+                                                                                                                                     #"Create new model + Predictions",
+                                                                                                                                     "Multiple traits to predict","Complete, Test dataset needed")),
                                                                                  pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE))),
                                                                           column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models can take a while.")),
@@ -93,7 +93,7 @@ fluidRow(useShinyjs(),
                                                               column(width=6,withSpinner(plotOutput('selectedPCAPlot',height =500)))))))),
                                                       
                                                       tabPanel("Become Contributor",column(width = 6,p(""),
-                                                      wellPanel(p("We will examine your dataset and maybe use your data to extend our database."),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
+                                                      wellPanel(p("The submitted dataset will be examined and if relevant it may be integrated to the database to extend it and make future predictions more precise"),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
                                                                 fluidRow(column(width=4,shinyjs::disabled(actionButton("sendContribution","Send")),p(""),span("You must provide a valid email adress before send so we can ask you further informations if your data is relevant",style="color:red")),
                                                                          column(width=8,textInput('mailcontrib',"",placeholder="Enter a valid email adress"),actionButton("Gocontrib","Register")))))
                                                       ))
