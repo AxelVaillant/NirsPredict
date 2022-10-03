@@ -38,7 +38,7 @@ fluidRow(useShinyjs(),
                                       fluidRow(
                                                       tabsetPanel(
                                                         tabPanel("Submit Spectrum",column(width =4,
-                                                                 p(""),wellPanel(span("Submitted files must have headers",style="color:red"), p("\n Download and consult the application manual above to get more details on input format and functionnalities")),
+                                                                 p(""),h4("Predict phenotypic traits"),wellPanel(span("Submitted files must have headers",style="color:red"), p("\n Download and consult the application manual above to get more details on input format and functionnalities")),
                                                                  wellPanel(fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
                                                                            shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))))),
                                                                  shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
@@ -49,7 +49,7 @@ fluidRow(useShinyjs(),
                                                                                                                                      "Multiple traits to predict","Complete, Test dataset needed")),
                                                                                  pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE))),
-                                                                          column(width = 6,HTML(paste('<br>',p("Predictions only is fast while building new models can take a while.")),
+                                                                          column(width = 6,HTML(paste('<br>',p("The prediction's robustness and the number of input to provide will rely on the selected mode.")),
                                                                                                 paste('<br>',p("Select some traits or/and metabolites to predict. Beware that the more you select the longer it will be."))))),
                                                                  fluidRow(column(width = 6,shinyjs::disabled(actionButton("runAnalysis","Run",icon("paper-plane"))),p(""),span("You must provide a valid email adress before launch so you can receive your run's results",style="color:red")),
                                                                           column(width=6,textInput('mail',"",placeholder="Enter a valid email adress"),actionButton("Go","Register")))),
@@ -58,7 +58,7 @@ fluidRow(useShinyjs(),
                                                       ),
                                                       tabPanel("Consult Database",column(width =4,
                                                                #INFOS GENERAL###############
-                                                               p(""),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               p(""),p("Visualize and download data from the database build from Vasseur et al. (2022)"),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("contributor",'Contributor',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
@@ -79,11 +79,11 @@ fluidRow(useShinyjs(),
                                                                fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                         column(width=6,radioButtons("nataccessions","Natural Accessions",choices=list("Included","Only","Excluded"))))),
                                                                #FORMAT##################
-                                                               p(""),h4("Output"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only","Custom"))),
+                                                               p(""),h4("Output"),p("Choose query output format"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only","Custom"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
                                                                                            fluidRow(span(verbatimTextOutput('resText'),style="color:red;text-align:center;"),shinyjs::hidden(downloadButton('DlConsult', label="Download")))),
                                                                #CUSTOM OPTIONS#############
-                                                               p(""),shinyjs::hidden(div(id="customoptions",h4("Custom Options"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
+                                                               p(""),shinyjs::hidden(div(id="customoptions",h4("Custom Options"),p("Customize the features present in the provided dataset"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
                                                                                                                              column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
                                                                                                                     ##2EME LIGNE
                                                                                                                     fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
@@ -92,7 +92,7 @@ fluidRow(useShinyjs(),
                                                                column(width=6,shinyjs::hidden(img(src = "AllSpectraPCA.png",height="105%",width="105%",id="imgPCA"))),
                                                               column(width=6,withSpinner(plotOutput('selectedPCAPlot',height =500)))))))),
                                                       
-                                                      tabPanel("Become Contributor",column(width = 6,p(""),
+                                                      tabPanel("Become Contributor",column(width = 6,p(""),h4("Share your data"),
                                                       wellPanel(p("The submitted dataset will be examined and if relevant it may be integrated to the database to extend it and make future predictions more precise"),fileInput('contributorfile','Upload CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
                                                                 fluidRow(column(width=4,shinyjs::disabled(actionButton("sendContribution","Send")),p(""),span("You must provide a valid email adress before send so we can ask you further informations if your data is relevant",style="color:red")),
                                                                          column(width=8,textInput('mailcontrib',"",placeholder="Enter a valid email adress"),actionButton("Gocontrib","Register")))))
