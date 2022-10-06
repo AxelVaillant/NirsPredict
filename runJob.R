@@ -27,7 +27,7 @@ send_email <- httr::POST(
         list(
           From = list(
             Email = sender_email,
-            Name = "Application NirsDB"
+            Name = "NirsDB Application"
           ),
           To = list(
             list(
@@ -35,18 +35,18 @@ send_email <- httr::POST(
               Name = ""
             )
           ),
-          Subject = paste0("[NirsDB] Le calcul des prédictions de votre spectre a démarré."),
+          Subject = paste0("[NirsDB] The computation of your NIRS predictions has started."),
           TextPart = paste0(
-            'Bonjour,\n\n',
-            'L’outil NirsDB a démarré le calcul de prédictions lié à votre spectre. ',
-            'Vous recevrez un email sous 24-48 heures avec les résultats.\n\n',
-            'Cet email est automatisé. Merci de ne pas y répondre.'
+            'Hello,\n\n',
+            'The NirsDB tool has started the computation of your NIRS predictions. ',
+            'You will receive an email with the results as soon as the job is over.\n\n',
+            'This email is automatic. Please don t answer it.'
           ),
           HTMLPart = paste0(
             'Bonjour,<br><br>',
-            'L’outil NirsDB a démarré le calcul de prédictions lié à votre spectre. ',
-            'Vous recevrez un email sous 24-48 heures avec les résultats.<br><br>',
-            '<i>Cet email est automatisé. Merci de ne pas y répondre.</i>'
+            'The NirsDB tool has started the computation of your NIRS predictions. ',
+            'You will receive an email with the results as soon as the job is over.<br><br>',
+            '<i>This email is automatic. Please don t answer it.</i>'
           )
         )
       )

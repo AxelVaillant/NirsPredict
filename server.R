@@ -402,7 +402,7 @@ function(input,output,session ){
     #if(!is.null(mode) && mode == 1){
     #  pred<-read.table(file=paste(session$token,"/Res/output3.csv",sep = ""),header=FALSE,sep=";")
     #} else {
-    pred<-read.table(file=paste(session$token,"/Res/output3_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
+    pred<-read.table(file=paste(session$token,"/Res/KerasPred_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
     #}
     #-----#
     d<-density(res[,1])

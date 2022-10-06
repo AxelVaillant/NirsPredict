@@ -41,7 +41,7 @@ send_email <- httr::POST(
         list(
           From = list(
             Email = sender_email,
-            Name = "Application NirsDB"
+            Name = "NirsDB Application"
           ),
           To = list(
             list(
@@ -51,16 +51,16 @@ send_email <- httr::POST(
           ),
           Subject = paste0("[NirsDB] Une contribution à été soumise."),
           TextPart = paste0(
-            'Bonjour,\n\n',
-            'Une contribution à été soumisse à l’outil NirsDB.',
-            'La contribution provient de l’utilisateur ',email_user,'.\n\n',
-            'Cet email est automatisé. Merci de ne pas y répondre.'
+            'Hello,\n\n',
+            'A contribution has been submitted to the NirsDB tool.',
+            'The contribution come from the user ',email_user,'.\n\n',
+            'This email is automatic. Please don t answer it.'
           ),
           HTMLPart = paste0(
-            'Bonjour,<br><br>',
-            'Une contribution à été soumisse à l’outil NirsDB.<br><br>',
-            'La contribution provient de l’utilisateur ',email_user,'.\n\n',
-            '<i>Cet email est automatisé. Merci de ne pas y répondre.</i>'
+            'Hello,<br><br>',
+            'A contribution has been submitted to the NirsDB tool.<br><br>',
+            'The contribution come from the user ',email_user,'.\n\n',
+            '<i>This email is automatic. Please don t answer it.</i>'
           ),
           Attachments = list(
             list(
