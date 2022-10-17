@@ -402,7 +402,7 @@ function(input,output,session ){
     #if(!is.null(mode) && mode == 1){
     #  pred<-read.table(file=paste(session$token,"/Res/output3.csv",sep = ""),header=FALSE,sep=";")
     #} else {
-    pred<-read.table(file=paste(session$token,"/Res/KerasPred_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
+    pred<-read.table(file=paste(session$token,"/Res/Pred_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
     #}
     #-----#
     d<-density(res[,1])
@@ -420,7 +420,7 @@ function(input,output,session ){
   ###UPLOAD CHECKING
   globalUploadCheck<-function(inFile,traitFile,testSpectrumFile,testTraitFile,destDir){
     if(isTRUE(spectrumUploadCheck(inFile,destDir))){
-      if(input$runMode == "Multiple traits to predict"){
+      if(input$runMode == "Build your own model + Predictions"){
         if(isTRUE(traitUploadCheck(traitFile,destDir))){
           return(TRUE)
         }
@@ -475,8 +475,8 @@ function(input,output,session ){
         shinyalert("Error missing data", "There are missing data in your dataset",type="error")
         reset('spectrumfile')
         runjs('Shiny.onInputChange("spectrumfile", null)')
-      } else if(ncol(data)!=2151){
-        shinyalert("Column Error", "There should be 2151 Columns",type="error")
+      } else if(input$runMode == "Predictions using our model" && ncol(data)<400){
+        shinyalert("Column Error", "There should be 2151 Columns in your Spectrum file",type="error")
         reset('spectrumfile')
         runjs('Shiny.onInputChange("spectrumfile", null)')
       } else {    
@@ -577,7 +577,7 @@ function(input,output,session ){
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
               }) 
-            } else if (input$runMode == "Multiple traits to predict"){
+            } else if (input$runMode == "Build your own model + Predictions"){
             tryCatch({
             future({
               #----------Connect to GPU----------------
@@ -706,7 +706,7 @@ function(input,output,session ){
   isshowedTestInputs<<-FALSE;
   observeEvent(input$runMode, {
     tryCatch({
-    if(input$runMode != "Multiple traits to predict" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
+    if(input$runMode != "Build your own model + Predictions" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
     }
@@ -722,7 +722,7 @@ function(input,output,session ){
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
     }
-    if(input$runMode == "Multiple traits to predict" &&  isshowedTraitInput == FALSE){
+    if(input$runMode == "Build your own model + Predictions" &&  isshowedTraitInput == FALSE){
       toggle(id="inputTrait")
       isshowedTraitInput<<-TRUE;
     }

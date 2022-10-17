@@ -17,7 +17,7 @@ fluidRow(useShinyjs(),
                                     
                                     fluidRow(column(width = 6, offset = 3,
                                                     wellPanel(align = "justify",class="homepage",
-                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0-Alpha</i> </h1>"),
+                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0-Beta</i> </h1>"),
                                                               br(),
                                                               HTML("<p> NirsDB is an application allowing to make predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum using deep-learning.
                                                               NirsDB has three functionalities : </p>
@@ -38,7 +38,8 @@ fluidRow(useShinyjs(),
                                       fluidRow(
                                                       tabsetPanel(
                                                         tabPanel("Submit Spectrum",column(width =4,
-                                                                 p(""),h4("Predict phenotypic traits"),wellPanel(span("Submitted files must have headers",style="color:red"), p("\n Download and consult the application manual above to get more details on input format and functionnalities")),
+                                                                 p(""),h4("Predict phenotypic traits"),wellPanel(HTML("<style> #warning {color:red;}</style><p id='warning'>Submitted files must have headers</p><p id='warning'>A dataset with at least 100 spectrum is advised to get high-quality predictions</p"),
+                                                                                                                 p("\n Download and consult the application manual above to get more details on input format and functionnalities")),
                                                                  wellPanel(fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
                                                                            shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))))),
                                                                  shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
@@ -46,7 +47,7 @@ fluidRow(useShinyjs(),
                                                                  
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model",
                                                                                                                                      #"Create new model + Predictions",
-                                                                                                                                     "Multiple traits to predict","Complete, Test dataset needed")),
+                                                                                                                                     "Build your own model + Predictions","Complete, Test dataset needed")),
                                                                                  pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE))),
                                                                           column(width = 6,HTML(paste('<br>',p("The prediction's robustness and the number of input to provide will rely on the selected mode.")),
