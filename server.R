@@ -2,7 +2,14 @@ plan(multisession)
 function(input,output,session ){
     #-------Create unique temporary repository---------------------#
     system(paste("mkdir ",session$token,sep = ""))
-  
+    #-------Get credentials----------------------#
+    credentials<-read.table(file = "csv/credentials.csv",header = TRUE,sep = ";")
+    ipGpu<-credentials$ipGpu
+    passwordGpu<-credentials$passwordGpu
+    dbHost<-credentials$dbHost
+    dbPort<-credentials$dbPort
+    dbUser<-credentials$dbUser
+    dbPassword<-credentials$dbPassword
     ############# ####DATABASE MANAGER##########################
     
     #################################################
@@ -14,7 +21,7 @@ function(input,output,session ){
       tryCatch({
       # Connect to the database
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser,password=dbPassword)
       
       listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
                          "measurement","plant_stage","treatment")
@@ -199,7 +206,7 @@ function(input,output,session ){
       shinyjs::show("plotsOutput")
       # Connect to the database
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
       #------Get Queries----------------------#
       queries<-dbManagement()
       spectrumOnlyQuery <-queries[[1]]
@@ -231,7 +238,7 @@ function(input,output,session ){
   outputManagement<- function(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res){
     withProgress(message='Plot management ouput',value=0,{
       #-serveur-#
-      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
+      con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
     ###########WRITING CSV OUTPUT#######################
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
@@ -392,7 +399,7 @@ function(input,output,session ){
   #####DENSITY GRAPHIC COMPARISON#####
   DensityComparison<- function(trait,mode){
     #-serveur-#
-    con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host="193.49.134.44",port="5432",user="vaillant",password="clm;dpd;av;")
+    con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
     
     
     Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");
@@ -505,7 +512,7 @@ function(input,output,session ){
             tryCatch({
             future({
               #----------Connect to GPU----------------
-              sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+              sessionGpu<-ssh_connect(ipGpu,passwd = passwordGpu)
               print(sessionGpu)
               #-----------Transfer spectrum file-------
               ssh_exec_wait(sessionGpu, command = c(
@@ -548,7 +555,7 @@ function(input,output,session ){
             tryCatch({
               future({
               #----------Connect to GPU----------------
-              sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+              sessionGpu<-ssh_connect(ipGpu,passwd = passwordGpu)
               print(sessionGpu)
               #-----------Transfer spectrum file-------
               ssh_exec_wait(sessionGpu, command = c(
@@ -581,7 +588,7 @@ function(input,output,session ){
             tryCatch({
             future({
               #----------Connect to GPU----------------
-              sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+              sessionGpu<-ssh_connect(ipGpu,passwd = passwordGpu)
               print(sessionGpu)
               #-----------Transfer spectrum file-------
               ssh_exec_wait(sessionGpu, command = c(
@@ -621,7 +628,7 @@ function(input,output,session ){
               tryCatch({
                 future({
                   #----------Connect to GPU----------------
-                  sessionGpu<-ssh_connect("vaillant@10.8.16.40",passwd = "Sonysilex915@")
+                  sessionGpu<-ssh_connect(ipGpu,passwd = passwordGpu)
                   print(sessionGpu)
                   #-----------Transfer spectrum file-------
                   ssh_exec_wait(sessionGpu, command = c(
@@ -792,6 +799,7 @@ function(input,output,session ){
   
   #Delete temporary repository
     session$onSessionEnded(function() {
-    system(paste("rm -Rf ",session$token,sep = ""))
+      #wait 1 hour before deleting the session's folder
+    delay(3600000,system(paste("rm -Rf ",session$token,sep = "")))
   })
 }
