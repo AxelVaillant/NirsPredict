@@ -10,17 +10,15 @@ function(input,output,session ){
     dbPort<-credentials$dbPort
     dbUser<-credentials$dbUser
     dbPassword<-credentials$dbPassword
-    ############# ####DATABASE MANAGER##########################
     
     #################################################
-    ########      QUERY SELECT INPUT      ###########
+    ############  DATABASE MANAGEMENT ###############
     #################################################
 
-      ######################INPUT UPDATE###########################
+    ###################### CONSULTATION FILTERS UPDATE #########################
     observe({
       tryCatch({
       # Connect to the database
-      #-serveur-#
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser,password=dbPassword)
       
       listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
@@ -28,7 +26,6 @@ function(input,output,session ){
       for( i in listParams){
         query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL ORDER BY ",i)
         assign(paste("SqlOutput",i,sep=""),dbGetQuery(con, query))
-        
       }
       
       updatePickerInput(session, "location", choices = SqlOutputexp_location)
@@ -46,7 +43,8 @@ function(input,output,session ){
       },error=function(err){showNotification("Database connexion error",type="error")
         return(NA)})
     })
-  
+    
+    ###################### DATABASE QUERY MANAGEMENT ###########################
   dbManagement <- function(){
     inputList<-list(input$location,input$exp,input$contributor,input$genotype,input$genetic_group,
                     input$condition,input$leaf_stage,input$plant_stage,input$measurement,input$treatment,
@@ -56,6 +54,7 @@ function(input,output,session ){
                          "glucosinolates","secondary_metabolites")
     selectquery<-""
     filterList<-""
+    #-Assign each input a corresponding variable
     for(i in 1:length(inputList)){
       if(!is.null(inputList[i][[1]])){
         filterList<-c(filterList,inputNameList[i])
@@ -65,8 +64,8 @@ function(input,output,session ){
       }
     }
     selectquery<-substr(selectquery,1,nchar(selectquery)-2)
-    #############QUERY BUILDING##############################
-    #######"WHERE"QUERY BUILDING#############
+    ##################### QUERY BUILDING ##############################
+    ############ "WHERE" QUERY BUILDING #############
     filterList1<-""
     for(i in 1:10){
       paramList<-""
@@ -79,7 +78,7 @@ function(input,output,session ){
         
       }
     }
-    
+    #-CONCATENATE AND SUBSTRING TO CONSTRUCT CORRECT QUERY-#
     filterList<-sapply(filterList,paste,collapse=", ")
     filterList<- paste(filterList, collapse = " and ")
     filterList<-substr(filterList,5,nchar(filterList))
@@ -87,13 +86,14 @@ function(input,output,session ){
     filterList1<- paste(filterList1, collapse = " and ")
     filterList1<-substr(filterList1,5,nchar(filterList1))
     
-    ######PARTICULAR CASE#####################
+    ####### SPECIALS CASES #####################
     filterListFinal<-NULL
+    #-DATE-#
     startDate<-input$date[1]
     endDate<-input$date[2]
     dateParam<-paste(" dateexp BETWEEN '",startDate,"' and '",endDate,"'",sep="")
     filterListFinal<-paste(c(filterList1,dateParam),collapse=" and ")
-    
+    #-SITUATION/LEAFATTACHEMENT/NATURAL_ACCESSIOONS-#
     situation<-NULL
     leafattach<-NULL
     nataccessions<-NULL
@@ -130,14 +130,13 @@ function(input,output,session ){
       }
     }
     
-    
-    if(filterList1 == ""){
+    #-CONCATENATE AND SUBSTRING TO CONSTRUCT CORRECT QUERY-#
+        if(filterList1 == ""){
       filterListFinal<-substr(filterListFinal,5,nchar(filterListFinal))
       filterListFinal<-paste("WHERE",filterListFinal)
     }
     
-    
-    ######PARAMETERS FILTER (PHENOTYPIC TRAITS ONLY CASE)
+    ############ PARAMETERS FILTER (PHENOTYPIC TRAITS ONLY CASE) ###############
     basicParameters<-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
                            "leaf_stage,type_sample,measurement,leaf_status,dateexp,plant_lifespan ,SLA,", 
                            "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX")
@@ -153,6 +152,7 @@ function(input,output,session ){
         otherFilterFinal<-paste(otherFilterFinal,otherFilterList,sep = "")
       }
     }
+     #-CUSTOM SELECTION CASE-#
     if(!is.null(otherFilterFinal)){
       otherFilterFinal<-substr(otherFilterFinal,1,nchar(otherFilterFinal)-1)
       customSelect<-paste(basicParameters,",",otherFilterFinal,sep = "")
@@ -160,7 +160,7 @@ function(input,output,session ){
       customSelect<-basicParameters
     }
     
-    ######SELECT CONDITION###########"
+    ############## SELECT CONDITION  ###############"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
     parametersSelect <-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
                              "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
@@ -198,14 +198,13 @@ function(input,output,session ){
     }
     return(Queries)
   }
-  
-  ################FORM MANAGER - CONSULT DATABASE####################
+  ##############################################################################
+  ###################### FORM MANAGER - CONSULT DATABASE #######################
   observeEvent(input$submit, {
     tryCatch({
     progress <- AsyncProgress$new(message="Filtering in progress")
       shinyjs::show("plotsOutput")
       # Connect to the database
-      #-serveur-#
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
       #------Get Queries----------------------#
       queries<-dbManagement()
@@ -233,13 +232,11 @@ function(input,output,session ){
         return(NA)
       })
   })
-  
-
+    ################### WRITING CSV OUTPUT ####################################
   outputManagement<- function(spectrumOnlyQuery,ParametersOnlyQuery,CustomQuery,newtab,res){
     withProgress(message='Plot management ouput',value=0,{
-      #-serveur-#
+      #-Database connection-#
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
-    ###########WRITING CSV OUTPUT#######################
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
     write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
@@ -312,9 +309,10 @@ function(input,output,session ){
       dbDisconnect(con)
     })
     }
-  
-  ##############FORMATING RAWDATA TO USER READABLE DATA#############################
-  #####BASIC LOOP#####
+  ##############################################################################
+  ######### FORMATING QUERY RESULT'S RAWDATA TO USER READABLE DATA #############
+  ##############################################################################
+  ##### BASIC LOOP #####
   FormatData<- function(res){
     newtab=data.frame()
     newtab <- as.data.frame(matrix(double(),ncol = 2152))
@@ -338,12 +336,12 @@ function(input,output,session ){
     return(newtab)
   }
   
-  ###########UNIVARIATE PLOT METHOD########
+  ############## UNIVARIATE MEAN PLOT METHOD #################
   plotMean<-function(newtab){
     allSpectrum<-read.table(file = "csv/allSpectrum.csv",header = TRUE,sep = ";")
     if(!is.na(newtab[1,1])){
       selecSpectrum <- as.data.frame(matrix(double(),ncol = 2))
-      
+      #-Building usable dataframe from result of user's query-#
       for(i in 350:2500){
         val<-paste('x',i,sep = "")
         absSelec<-newtab[,val]
@@ -362,6 +360,7 @@ function(input,output,session ){
       c<-cbind(c,wavelength)
       name<-as.factor(rep(c("Individual","All"),each=2151))
       rdyToPlot<-data.frame(c,name)
+      
       #####PLOT######
       plot(rdyToPlot[rdyToPlot$name=="Individual","wavelength"], rdyToPlot[rdyToPlot$name=="Individual","absSelec"], col="firebrick3", type="l", lwd=3, ylim=c(0,1.2),
            main="Mean comparison",xlab="Wavelength",ylab="Absorption")
@@ -369,8 +368,8 @@ function(input,output,session ){
       legend(1700,0.85,legend = c("Selected spectrums","All spectrums"),col =c("firebrick3","dodgerblue3"),lty=1:2,cex = 0.8)
     }
   }
+    ############ UNIVARIATE GRAPHICAL OUTPUT ######################
   meanPlot<-function(newtab){
-    ######UNIVARIATE GRAPHICAL OUTPUT#############
     # mean plot
     output$MeanPlot <- renderPlot({
       withProgress(message = 'Meanplot in progress', value=0, {
@@ -379,11 +378,13 @@ function(input,output,session ){
       })
     })
   }
+    #############################################################
+    ############# MULTIVARIATE GRAPHICAL OUTPUT #################
+    #####-PCA OF USER'S QUERY RESULTS-#########
   pcaSelectedPlot<- function(){
     withProgress(message = "Pca Plot in progress", value= 0,{
       incProgress(1/4)
-    ######MULTIVARIATE GRAPHICAL OUTPUT#############
-    # selected pca plot
+    #-Selected pca plot-#
     output$selectedPCAPlot <- renderPlot({
       newtab<-read.table(file=paste(session$token,"/selectedSpectrums.csv",sep =""),header = TRUE,sep = ";")
       params<-read.table(file=paste(session$token,"/paramsOnlyRes.csv",sep=""),header=TRUE,sep=";")
@@ -395,22 +396,18 @@ function(input,output,session ){
     })
   }
     
-  
-  #####DENSITY GRAPHIC COMPARISON#####
+  ######################################################
+  ############## DENSITY GRAPHIC COMPARISON ############
+  ######################################################  
   DensityComparison<- function(trait,mode){
-    #-serveur-#
+    #-Database connection-#
     con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
-    
-    
+    #-Get all values of the selected trait from the database-#
     Query = paste("SELECT ",trait," FROM individual WHERE ",trait," IS NOT NULL",sep = "");
     res <- dbGetQuery(conn = con,statement = Query)
     dbDisconnect(con)
-    #-----#
-    #if(!is.null(mode) && mode == 1){
-    #  pred<-read.table(file=paste(session$token,"/Res/output3.csv",sep = ""),header=FALSE,sep=";")
-    #} else {
+    #-Read predictions-#
     pred<-read.table(file=paste(session$token,"/Res/Pred_",toupper(trait),".csv",sep = ""),header=FALSE,sep=";")
-    #}
     #-----#
     d<-density(res[,1])
     png(paste(session$token,"/Res/density_comparaison",trait,".png",sep = ""))
@@ -420,11 +417,13 @@ function(input,output,session ){
     legend("topright", c("Database values","Predictions values"), col = c("black","red"), lty=1)
     dev.off()
   }
-  ###OPTIONS
+    
+  ################ OPTIONS ###############
   options(encoding = "UTF-8")
   options(shiny.maxRequestSize=1000*1024^2)
   
-  ###UPLOAD CHECKING
+  ############################################################
+  #################### FILE UPLOAD CHECKING ##################
   globalUploadCheck<-function(inFile,traitFile,testSpectrumFile,testTraitFile,destDir){
     if(isTRUE(spectrumUploadCheck(inFile,destDir))){
       if(input$runMode == "Build your own model + Predictions"){
@@ -440,7 +439,7 @@ function(input,output,session ){
       }
     }
   }
-  
+  ###########-TRAIT FILE CHECKING-###########
   traitUploadCheck<-function(traitFile,destDir){
     traits <- c(input$functionalTraits,input$metabolites)
     possibleTraits <- c(listFunctionalTraits,listSecondaryMetabolites,listHormones)
@@ -472,7 +471,7 @@ function(input,output,session ){
       }
     }
   }
-  
+  ###########-SPECTRUM FILE CHECKING-###########
   spectrumUploadCheck<-function(inFile,destDir){
     if(is.null(inFile)){
       shinyalert("Input missing", "No spectrum file has been provided",type="error")
@@ -494,8 +493,9 @@ function(input,output,session ){
       }
     }
   }
-  
-  ###UPLOAD HANDLING
+  ##############################################################################
+  ################ GPU SERVER INTERFACE + RUNNING PYTHON PIPELINE ##############
+  ##############################################################################
   destDir<-'uploads'
   observeEvent(input$runAnalysis,{
     tryCatch({
@@ -505,10 +505,12 @@ function(input,output,session ){
     testTraitFile <- input$testTraitsFile
     traits <- c(input$functionalTraits,input$metabolites)
     mail <- get(paste(session$token,"-","mail",sep=""))
+    
     if(isTRUE(globalUploadCheck(inFile,traitFile,testSpectrumFile,testTraitFile,destDir))){
       #system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
-          if(input$runMode == "Predictions using our model"){
+      ##-MODE 1-##    
+      if(input$runMode == "Predictions using our model"){
             tryCatch({
             future({
               #----------Connect to GPU----------------
@@ -550,7 +552,6 @@ function(input,output,session ){
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
               })
-            
           } else if (input$runMode == "Create new model + Predictions"){
             tryCatch({
               future({
@@ -584,6 +585,7 @@ function(input,output,session ){
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
               }) 
+            ##-MODE 2-##  
             } else if (input$runMode == "Build your own model + Predictions"){
             tryCatch({
             future({
@@ -624,6 +626,7 @@ function(input,output,session ){
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
               })
+              ##-MODE 3-##  
             } else if (input$runMode == "Complete, Test dataset needed"){
               tryCatch({
                 future({
@@ -674,8 +677,8 @@ function(input,output,session ){
         }
     })
   })
-  
-  #####CONSULTATION DOWNLOAD HANDLING
+  #####################################################
+  ######### CONSULTATION DOWNLOAD HANDLING ############
   uploadData <- function(outputname) {
     output$DlConsult <- downloadHandler(
       filename = function() {
@@ -686,16 +689,16 @@ function(input,output,session ){
       }
     )
   }
-  
-  #####Application Manual download######
+  ########################################
+  ##### APPLICATION MANUAL DOWNLOAD ######
     output$manual <- downloadHandler(
       filename = "Manual.pdf",
       content = function(file) {
         file.copy("Manual.pdf",file)
       }
     )
-  
-  #####Custom options toggle button#####
+  ########################################
+  ##### CUSTOM OPTIONS TOGGLE BUTTON #####
   isshowed<<-FALSE;
   observeEvent(input$outputformat, {
     if(input$outputformat == "Custom"){
@@ -709,6 +712,7 @@ function(input,output,session ){
     }
   })
   
+  ######### UPLOAD BUTTON MANAGEMENT #############
   isshowedTraitInput<<-FALSE;
   isshowedTestInputs<<-FALSE;
   observeEvent(input$runMode, {
@@ -737,7 +741,7 @@ function(input,output,session ){
       return(NA)})
   })
   
-  #########TRAITS SELECTION#################
+  ######### REGISTER BUTTON MANAGEMENT #################
   toListen <- reactive({
     list(input$functionalTraits,input$metabolites)
   })
@@ -748,7 +752,8 @@ function(input,output,session ){
       disable('Go')
     }
   }, ignoreNULL = FALSE)
-  #########EMAIL HANDLER###################
+  
+  ######### EMAIL HANDLER ###################
   observeEvent(input$Go,{
     if(!input$mail=="" && isValidEmail(input$mail)){
       assign(paste(session$token,"-","mail",sep=""),input$mail, envir = .GlobalEnv)
@@ -758,6 +763,7 @@ function(input,output,session ){
       shinyalert("Invalid email", "Invalid email",type="error")
     }
   })
+  #-CONTRIBUTOR EMAIL-#
   observeEvent(input$Gocontrib,{
     if(!input$mailcontrib=="" && isValidEmail(input$mailcontrib)){
       assign(paste(session$token,"-","mailContrib",sep=""),input$mailcontrib, envir = .GlobalEnv)
@@ -767,10 +773,12 @@ function(input,output,session ){
       shinyalert("Invalid email", "Invalid email",type="error")
     }
   })
+  #-EMAIL PATTERN TO MATCH-#
   isValidEmail <- function(x) {
     grepl("\\<[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\>", as.character(x), ignore.case=TRUE)
   }
-  #########CONTRIBUTOR PAGE################
+  #########################################################
+  #################### CONTRIBUTOR PAGE ###################
   observeEvent(input$sendContribution,{
     tryCatch({
     system(paste("mkdir contribution/",session$token,sep = ""))
