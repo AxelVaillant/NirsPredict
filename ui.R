@@ -1,6 +1,4 @@
 fluidRow(useShinyjs(),
-                         #---prevent page reload to crash----
-                         #tagList( tags$head( tags$script(htmlwidgets::JS("setTimeout(function(){history.pushState({}, 'Page Title', '/');},2000);")))),
   bootstrapPage('',
                 tags$style(type="text/css",
                            HTML('.navbar {background-color: #50C21B; font-size: 18px;}
@@ -19,7 +17,7 @@ fluidRow(useShinyjs(),
                                                     wellPanel(align = "justify",class="homepage",
                                                               HTML("<h1 align = 'center'>NirsDB <i>1.0.0-Beta</i> </h1>"),
                                                               br(),
-                                                              HTML("<p> NirsDB is an application allowing to make predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum using deep-learning.
+                                                              HTML("<p> NirsDB is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectrum using deep-learning.
                                                               NirsDB has three functionalities : </p>
                                                                    <ul><li>The submition of your data to our deep-learning algorithms to get traits predictions.</li>
                                                                    <li>The consultation of the database used to construct our deep-learning models, 
