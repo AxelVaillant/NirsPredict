@@ -1,6 +1,6 @@
 # NirsDB
-NirsDB is a Shiny application, built using the Shiny R package that allow to make deep-learning predictions
-about phenotypic traits of A. thaliana by submiting related NIRS spectrum
+NirsDB is a Shiny application, built using the Shiny R package that allow users to consult and visualize a large NIRS values database and also allows to predict phenotypic traits of Arabidospis thaliana by submiting related NIRS spectrum thanks to deep-learning algorithms.
+<br/>
 (see <a href=https://doi.org/10.3389/fpls.2022.836488>Vasseur et al.</a>).
 
 # Dependencies
