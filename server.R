@@ -426,11 +426,11 @@ function(input,output,session ){
   #################### FILE UPLOAD CHECKING ##################
   globalUploadCheck<-function(inFile,traitFile,testSpectrumFile,testTraitFile,destDir){
     if(isTRUE(spectrumUploadCheck(inFile,destDir))){
-      if(input$runMode == "Build your own model + Predictions"){
+      if(input$runMode == "Predict traits with your own model"){
         if(isTRUE(traitUploadCheck(traitFile,destDir))){
           return(TRUE)
         }
-      } else if (input$runMode == "Complete, Test dataset needed"){
+      } else if (input$runMode == "Test your model"){
         if(isTRUE(traitUploadCheck(testTraitFile,destDir)) && isTRUE(spectrumUploadCheck(testSpectrumFile,destDir))){
           return(TRUE)
         }
@@ -481,7 +481,7 @@ function(input,output,session ){
         shinyalert("Error missing data", "There are missing data in your dataset",type="error")
         reset('spectrumfile')
         runjs('Shiny.onInputChange("spectrumfile", null)')
-      } else if(input$runMode == "Predictions using our model" && ncol(data)<400){
+      } else if(input$runMode == "Predict traits from built-in models" && ncol(data)<400){
         shinyalert("Column Error", "There should be 2151 Columns in your Spectrum file",type="error")
         reset('spectrumfile')
         runjs('Shiny.onInputChange("spectrumfile", null)')
@@ -510,7 +510,7 @@ function(input,output,session ){
       #system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
       ##-MODE 1-##    
-      if(input$runMode == "Predictions using our model"){
+      if(input$runMode == "Predict traits from built-in models"){
             tryCatch({
             future({
               #----------Connect to GPU----------------
@@ -586,7 +586,7 @@ function(input,output,session ){
               return(NA)})
               }) 
             ##-MODE 2-##  
-            } else if (input$runMode == "Build your own model + Predictions"){
+            } else if (input$runMode == "Predict traits with your own model"){
             tryCatch({
             future({
               #----------Connect to GPU----------------
@@ -627,7 +627,7 @@ function(input,output,session ){
               return(NA)})
               })
               ##-MODE 3-##  
-            } else if (input$runMode == "Complete, Test dataset needed"){
+            } else if (input$runMode == "Test your model"){
               tryCatch({
                 future({
                   #----------Connect to GPU----------------
@@ -717,23 +717,23 @@ function(input,output,session ){
   isshowedTestInputs<<-FALSE;
   observeEvent(input$runMode, {
     tryCatch({
-    if(input$runMode != "Build your own model + Predictions" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
+    if(input$runMode != "Predict traits with your own model" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
     }
-    if(input$runMode == "Complete, Test dataset needed"){
+    if(input$runMode == "Test your model"){
       toggle(id="inputDataTest")
       isshowedTestInputs<<-TRUE;
       toggle(id="inputTrait")
       isshowedTraitInput<<-TRUE;
     }
-    if(input$runMode != "Complete, Test dataset needed" && isshowedTestInputs == TRUE && isshowedTraitInput == TRUE ){
+    if(input$runMode != "Test your model" && isshowedTestInputs == TRUE && isshowedTraitInput == TRUE ){
       toggle(id="inputDataTest")
       isshowedTestInputs<<-FALSE;
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
     }
-    if(input$runMode == "Build your own model + Predictions" &&  isshowedTraitInput == FALSE){
+    if(input$runMode == "Predict traits with your own model" &&  isshowedTraitInput == FALSE){
       toggle(id="inputTrait")
       isshowedTraitInput<<-TRUE;
     }

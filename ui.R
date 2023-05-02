@@ -15,7 +15,7 @@ fluidRow(useShinyjs(),
                                     
                                     fluidRow(column(width = 6, offset = 3,
                                                     wellPanel(align = "justify",class="homepage",
-                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0-Beta</i> </h1>"),
+                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0</i> </h1>"),
                                                               br(),
                                                               HTML("<p> NirsDB is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectrum using deep-learning.
                                                               NirsDB has three functionalities : </p>
@@ -43,9 +43,9 @@ fluidRow(useShinyjs(),
                                                                  shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
                                                                                      column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')))))),
                                                                  
-                                                                 fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predictions using our model",
+                                                                 fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predict traits from built-in models",
                                                                                                                                      #"Create new model + Predictions",
-                                                                                                                                     "Build your own model + Predictions","Complete, Test dataset needed")),
+                                                                                                                                     "Predict traits with your own model","Test your model")),
                                                                                  pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE))),
                                                                           column(width = 6,HTML(paste('<br>',p("The prediction's robustness and the number of input to provide will rely on the selected mode.")),
