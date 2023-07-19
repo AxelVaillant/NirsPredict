@@ -245,7 +245,7 @@ function(input,output,session ){
     if(input$outputformat=="All Data"){
       if(is.na(res[1,1])){
         output$resText<-renderText({
-          HTML(paste("Your filters don't match any spectrums in the database.",
+          HTML(paste("Your filters don't match any spectra in the database.",
                      "Please retry with less specific criteria", sep="\n "))
         })
       } else {
@@ -258,11 +258,11 @@ function(input,output,session ){
         uploadData("allDataRes")
       }
     }
-    #----------------Spectrum Only Output----------
-    if(input$outputformat=="Spectrum only"){
+    #----------------Spectra only Output----------
+    if(input$outputformat=="Spectra only"){
       if(is.na(res[1,1])){
         output$resText<-renderText({
-          HTML(paste("Your filters don't match any spectrums in the database.",
+          HTML(paste("Your filters don't match any spectra in the database.",
                      "Please retry with less specific criteria", sep="\n "))
         })
       } else {
@@ -277,7 +277,7 @@ function(input,output,session ){
     if(input$outputformat=="Phenotypic traits only"){
       if(is.na(paramsOnlyRes[1,1])){
         output$resText<-renderText({
-          HTML(paste("Your filters don't match any spectrums in the database.",
+          HTML(paste("Your filters don't match any spectra in the database.",
                      "Please retry with less specific criteria", sep="\n "))
         })
       } else {
@@ -294,7 +294,7 @@ function(input,output,session ){
       customRes <- dbGetQuery(conn = con,statement = CustomQuery)
       if(is.na(customRes[1,1])){
         output$resText<-renderText({
-          HTML(paste("Your filters don't match any spectrums in the database.",
+          HTML(paste("Your filters don't match any spectra in the database.",
                      "Please retry with less specific criteria", sep="\n "))
         })
       } else {
@@ -474,7 +474,7 @@ function(input,output,session ){
   ###########-SPECTRUM FILE CHECKING-###########
   spectrumUploadCheck<-function(inFile,destDir){
     if(is.null(inFile)){
-      shinyalert("Input missing", "No spectrum file has been provided",type="error")
+      shinyalert("Input missing", "No spectra file has been provided",type="error")
     } else {
       data<-read.table(inFile$datapath,sep=";")
       if(any(is.na(data))){

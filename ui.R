@@ -17,7 +17,7 @@ fluidRow(useShinyjs(),
                                                     wellPanel(align = "justify",class="homepage",
                                                               HTML("<h1 align = 'center'>NirsPredict <i>1.0.0</i> </h1>"),
                                                               br(),
-                                                              HTML("<p> NirsPredict is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectrum using deep-learning.
+                                                              HTML("<p> NirsPredict is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectra using deep-learning.
                                                               NirsPredict has three functionalities : </p>
                                                                    <ul><li>The submition of your data to our deep-learning algorithms to get traits predictions.</li>
                                                                    <li>The consultation of the database used to construct our deep-learning models, 
@@ -35,12 +35,12 @@ fluidRow(useShinyjs(),
                                       fluidRow(column(width=1,p("NirsPredict Application")),column(width=1,downloadButton('manual', label="Download application manual",style='padding:4px; font-size:80%;'))),
                                       fluidRow(
                                                       tabsetPanel(
-                                                        tabPanel("Submit Spectrum",column(width =4,
-                                                                 p(""),h4("Predict phenotypic traits"),wellPanel(HTML("<style> #warning {color:red;}</style><p id='warning'>Submitted files must have headers</p><p id='warning'>A dataset with at least 100 spectrum is advised to get high-quality predictions</p"),
+                                                        tabPanel("Predict trait",column(width =4,
+                                                                 p(""),h4("Predict phenotypic traits"),wellPanel(HTML("<style> #warning {color:red;}</style><p id='warning'>Submitted files must have headers</p><p id='warning'>A dataset with at least 100 spectra is advised to get high-quality predictions</p"),
                                                                                                                  p("\n Download and consult the application manual above to get more details on input format and functionnalities")),
-                                                                 wellPanel(fileInput('spectrumfile','Upload Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
+                                                                 wellPanel(fileInput('spectrumfile','Upload Spectra CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')),
                                                                            shinyjs::hidden(div(id="inputTrait",(fileInput('traitsfile','Upload Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))))),
-                                                                 shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectrum CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
+                                                                 shinyjs::hidden(div(id="inputDataTest",column(width=6,fileInput('testSpectrumFile','Upload Test Spectra CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv'))),
                                                                                      column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')))))),
                                                                  
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predict traits from built-in models",
@@ -55,7 +55,7 @@ fluidRow(useShinyjs(),
                                                                  wellPanel(span("Prediction with our models can be imprecise due to specific conditions of your samples. \n
                                                                                                 In this case you can train against our deep learning scripts to build new model more suitable for your data to make predictions."))),column(width=3,p(""),img(src="stats.png", width='100%', height='auto')),column(width=5,img(src = "map.png", width = '100%', height = "auto"))
                                                       ),
-                                                      tabPanel("Consult Database",column(width =4,
+                                                      tabPanel("Explore Database",column(width =4,
                                                                #INFOS GENERAL###############
                                                                p(""),p("Visualize and download data from the database build from Vasseur et al. (2022)"),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
@@ -78,7 +78,7 @@ fluidRow(useShinyjs(),
                                                                fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                         column(width=6,radioButtons("nataccessions","Natural Accessions",choices=list("Included","Only","Excluded"))))),
                                                                #FORMAT##################
-                                                               p(""),h4("Output"),p("Choose query output format"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectrum only","Phenotypic traits only","Custom"))),
+                                                               p(""),h4("Output"),p("Choose query output format"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectra only","Phenotypic traits only","Custom"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
                                                                                            fluidRow(span(verbatimTextOutput('resText'),style="color:red;text-align:center;"),shinyjs::hidden(downloadButton('DlConsult', label="Download")))),
                                                                #CUSTOM OPTIONS#############
@@ -100,7 +100,7 @@ fluidRow(useShinyjs(),
                 ),
                 tabPanel("About",fluidRow(column(width=6,offset=3,wellPanel(align = "justify",
                                                                             HTML("<h1 align = 'center'>NirsPredict</h1>"),
-                                                                            HTML("<p align = 'center'>NirsPredict is a tool allowing to make deep-learning predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum</p>"),
+                                                                            HTML("<p align = 'center'>NirsPredict is a tool allowing to make deep-learning predictions about phenotypic traits of A. thaliana by submiting related NIRS spectra</p>"),
                                                                             HTML("<p align = 'center'>'A Perspective on Plant Phenomics: Coupling Deep Learning and Near-Infrared Spectroscopy' - <a href=https://doi.org/10.3389/fpls.2022.836488>Vasseur et al.</a></p>"),
                                                                             HTML("<p align = 'center'>You can contact us on this email adress : NirsPredict@post.com </p>"),
                                                                             HTML("<p align = 'center'><img src = 'cefe.png' width = '150px' height = 'auto'><img src = 'cnrs.png' width = '150px' height = 'auto'><img src = 'institutAgro.png' width = '150px' height = 'auto'>
