@@ -21,7 +21,7 @@ function(input,output,session ){
       # Connect to the database
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser,password=dbPassword)
       
-      listParams <- list("exp_location","idexp","main_contributor","conditionexp","genetic_group","genotype","leaf_stage",
+      listParams <- list("exp_location","idexp","reference","conditionexp","genetic_group","genotype","leaf_stage",
                          "measurement","plant_stage","treatment")
       for( i in listParams){
         query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL ORDER BY ",i)
@@ -30,7 +30,7 @@ function(input,output,session ){
       
       updatePickerInput(session, "location", choices = SqlOutputexp_location)
       updatePickerInput(session, "exp", choices = SqlOutputidexp)
-      updatePickerInput(session, "contributor", choices = SqlOutputmain_contributor)
+      updatePickerInput(session, "reference", choices = SqlOutputreference)
       updatePickerInput(session, "genetic_group", choices = SqlOutputgenetic_group)
       updatePickerInput(session, "genotype", choices = SqlOutputgenotype)
       updatePickerInput(session, "condition", choices = SqlOutputconditionexp)
@@ -49,7 +49,7 @@ function(input,output,session ){
     inputList<-list(input$location,input$exp,input$contributor,input$genotype,input$genetic_group,
                     input$condition,input$leaf_stage,input$plant_stage,input$measurement,input$treatment,
                     input$CSR,input$sugar,input$glucosinolates,input$secondary_metabolites)
-    inputNameList<- list("exp_location","idexp","main_contributor","genotype","genetic_group","conditionexp",
+    inputNameList<- list("exp_location","idexp","reference","genotype","genetic_group","conditionexp",
                          "leaf_stage","plant_stage","measurement","treatment","CSR","sugar",
                          "glucosinolates","secondary_metabolites")
     selectquery<-""
@@ -137,7 +137,7 @@ function(input,output,session ){
     }
     
     ############ PARAMETERS FILTER (PHENOTYPIC TRAITS ONLY CASE) ###############
-    basicParameters<-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
+    basicParameters<-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
                            "leaf_stage,type_sample,measurement,leaf_status,dateexp,plant_lifespan ,SLA,", 
                            "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX")
     otherFilterList<-""
@@ -162,7 +162,7 @@ function(input,output,session ){
     
     ############## SELECT CONDITION  ###############"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
-    parametersSelect <-paste("individual_id,identification,idexp,main_contributor,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
+    parametersSelect <-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
                              "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
                              "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
                              "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",

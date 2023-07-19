@@ -10,15 +10,15 @@ fluidRow(useShinyjs(),
                            .homepage{border-radius:25px}
                                 pre{color:red;background-color:#fbf65e;}')),
                 tags$head(tags$link(rel="shortcut icon", href="favicon.ico")),
-                navbarPage(title = "NirsDB", id = "tabset", 
+                navbarPage(title = "NirsPredict", id = "tabset", 
                            tabPanel("Home page",
                                     
                                     fluidRow(column(width = 6, offset = 3,
                                                     wellPanel(align = "justify",class="homepage",
-                                                              HTML("<h1 align = 'center'>NirsDB <i>1.0.0</i> </h1>"),
+                                                              HTML("<h1 align = 'center'>NirsPredict <i>1.0.0</i> </h1>"),
                                                               br(),
-                                                              HTML("<p> NirsDB is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectrum using deep-learning.
-                                                              NirsDB has three functionalities : </p>
+                                                              HTML("<p> NirsPredict is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectrum using deep-learning.
+                                                              NirsPredict has three functionalities : </p>
                                                                    <ul><li>The submition of your data to our deep-learning algorithms to get traits predictions.</li>
                                                                    <li>The consultation of the database used to construct our deep-learning models, 
                                                                    it's possible to target the data you're interested in with some filters and download the corresponding dataset , morevover graphical representation of the dataset will be printed. </li>
@@ -32,7 +32,7 @@ fluidRow(useShinyjs(),
                            tabPanel("Application", value="app",
                                     fluidPage(
                                       
-                                      fluidRow(column(width=1,p("NirsDB Application")),column(width=1,downloadButton('manual', label="Download application manual",style='padding:4px; font-size:80%;'))),
+                                      fluidRow(column(width=1,p("NirsPredict Application")),column(width=1,downloadButton('manual', label="Download application manual",style='padding:4px; font-size:80%;'))),
                                       fluidRow(
                                                       tabsetPanel(
                                                         tabPanel("Submit Spectrum",column(width =4,
@@ -60,7 +60,7 @@ fluidRow(useShinyjs(),
                                                                p(""),p("Visualize and download data from the database build from Vasseur et al. (2022)"),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("contributor",'Contributor',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               fluidRow(column(width =6,pickerInput("reference",'Reference',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width=6,dateRangeInput("date",'Dates',start = '2016-01-01',format='yyyy-mm')))),
                                                                #INFOS SAMPLE###############
                                                                p(""),h4("Sample Informations"),wellPanel(fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
@@ -99,10 +99,10 @@ fluidRow(useShinyjs(),
                                                       ))
                 ),
                 tabPanel("About",fluidRow(column(width=6,offset=3,wellPanel(align = "justify",
-                                                                            HTML("<h1 align = 'center'>NirsDB</h1>"),
-                                                                            HTML("<p align = 'center'>NirsDB is a tool allowing to make deep-learning predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum</p>"),
+                                                                            HTML("<h1 align = 'center'>NirsPredict</h1>"),
+                                                                            HTML("<p align = 'center'>NirsPredict is a tool allowing to make deep-learning predictions about phenotypic traits of A. thaliana by submiting related NIRS spectrum</p>"),
                                                                             HTML("<p align = 'center'>'A Perspective on Plant Phenomics: Coupling Deep Learning and Near-Infrared Spectroscopy' - <a href=https://doi.org/10.3389/fpls.2022.836488>Vasseur et al.</a></p>"),
-                                                                            HTML("<p align = 'center'>You can contact us on this email adress : nirsdb@post.com </p>"),
+                                                                            HTML("<p align = 'center'>You can contact us on this email adress : NirsPredict@post.com </p>"),
                                                                             HTML("<p align = 'center'><img src = 'cefe.png' width = '150px' height = 'auto'><img src = 'cnrs.png' width = '150px' height = 'auto'><img src = 'institutAgro.png' width = '150px' height = 'auto'>
                                                                                  <img src = 'cirad.png' width = '150px' height = 'auto'><img src = 'univMtp.svg' width = '150px' height = 'auto'><img src = 'inrae.png' width = '150px' height = 'auto'>
                                                                                  <img src = 'ird.png' width = '150px' height = 'auto'><img src = 'ephe.png' width = '150px' height = 'auto'></p>"))))))
