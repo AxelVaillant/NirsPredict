@@ -21,8 +21,7 @@ function(input,output,session ){
       # Connect to the database
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser,password=dbPassword)
       
-      listParams <- list("exp_location","idexp","reference","conditionexp","genetic_group","genotype","leaf_stage",
-                         "measurement","plant_stage","treatment")
+      listParams <- list("exp_location","idexp","reference","conditionexp","genotype","plant_stage","treatment")
       for( i in listParams){
         query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL ORDER BY ",i)
         assign(paste("SqlOutput",i,sep=""),dbGetQuery(con, query))
@@ -31,12 +30,9 @@ function(input,output,session ){
       updatePickerInput(session, "location", choices = SqlOutputexp_location)
       updatePickerInput(session, "exp", choices = SqlOutputidexp)
       updatePickerInput(session, "reference", choices = SqlOutputreference)
-      updatePickerInput(session, "genetic_group", choices = SqlOutputgenetic_group)
       updatePickerInput(session, "genotype", choices = SqlOutputgenotype)
       updatePickerInput(session, "condition", choices = SqlOutputconditionexp)
-      updatePickerInput(session, "leaf_stage", choices = SqlOutputleaf_stage)
       updatePickerInput(session, "plant_stage", choices = SqlOutputplant_stage)
-      updatePickerInput(session, "measurement", choices = SqlOutputmeasurement)
       updatePickerInput(session, "treatment", choices = SqlOutputtreatment)
       
       dbDisconnect(con)
@@ -46,11 +42,11 @@ function(input,output,session ){
     
     ###################### DATABASE QUERY MANAGEMENT ###########################
   dbManagement <- function(){
-    inputList<-list(input$location,input$exp,input$contributor,input$genotype,input$genetic_group,
-                    input$condition,input$leaf_stage,input$plant_stage,input$measurement,input$treatment,
+    inputList<-list(input$location,input$exp,input$contributor,input$genotype,
+                    input$condition,input$plant_stage,input$treatment,
                     input$CSR,input$sugar,input$glucosinolates,input$secondary_metabolites)
-    inputNameList<- list("exp_location","idexp","reference","genotype","genetic_group","conditionexp",
-                         "leaf_stage","plant_stage","measurement","treatment","CSR","sugar",
+    inputNameList<- list("exp_location","idexp","reference","genotype","conditionexp",
+                         "plant_stage","treatment","CSR","sugar",
                          "glucosinolates","secondary_metabolites")
     selectquery<-""
     filterList<-""
@@ -93,16 +89,12 @@ function(input,output,session ){
     endDate<-input$date[2]
     dateParam<-paste(" dateexp BETWEEN '",startDate,"' and '",endDate,"'",sep="")
     filterListFinal<-paste(c(filterList1,dateParam),collapse=" and ")
-    #-SITUATION/LEAFATTACHEMENT/NATURAL_ACCESSIOONS-#
+    #-SITUATION/NATURAL_ACCESSIOONS-#
     situation<-NULL
-    leafattach<-NULL
     nataccessions<-NULL
-    if((!input$situation == "Both") || (!input$leafAttach == "Both") || (!input$nataccessions == "Included")){
+    if((!input$situation == "Both") ||  (!input$nataccessions == "Included")){
       if(!input$situation=="Both"){
         situation<-paste(" indout = '",input$situation,"'",sep="")
-      }
-      if(!input$leafAttach=="Both"){
-        leafattach<-paste(" leaf_status = '",input$leafAttach,"'",sep="")
       }
       if(input$nataccessions == "Only"){
         nataccessions<-paste(" genotype IS NULL",sep="")
@@ -110,23 +102,14 @@ function(input,output,session ){
       if(input$nataccessions == "Excluded"){
         nataccessions<-paste(" genotype !=''",sep="")
       }
-      if(!is.null(situation) && is.null(leafattach) && is.null(nataccessions)){
+      if(!is.null(situation) && is.null(nataccessions)){
         filterListFinal<-paste(c(filterListFinal,situation),collapse=" and ")
       }
-      if(!is.null(leafattach) && is.null(situation) && is.null(nataccessions)){
-        filterListFinal<-paste(c(filterListFinal,leafattach),collapse=" and ")
-      }
-      if(!is.null(nataccessions) && is.null(situation) && is.null(leafattach)){
+      if(!is.null(nataccessions) && is.null(situation)){
         filterListFinal<-paste(c(filterListFinal,nataccessions),collapse=" and ")
-      }
-      if((!is.null(situation)) && (!is.null(leafattach))){
-        filterListFinal<-paste(c(filterListFinal,situation,leafattach),collapse=" and ")
       }
       if((!is.null(situation)) && (!is.null(nataccessions))){
         filterListFinal<-paste(c(filterListFinal,situation,nataccessions),collapse=" and ")
-      }
-      if((!is.null(leafattach)) && (!is.null(nataccessions))){
-        filterListFinal<-paste(c(filterListFinal,leafattach,nataccessions),collapse=" and ")
       }
     }
     
@@ -137,8 +120,8 @@ function(input,output,session ){
     }
     
     ############ PARAMETERS FILTER (PHENOTYPIC TRAITS ONLY CASE) ###############
-    basicParameters<-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
-                           "leaf_stage,type_sample,measurement,leaf_status,dateexp,plant_lifespan ,SLA,", 
+    basicParameters<-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,plant_stage,",
+                           "type_sample,dateexp,plant_lifespan ,SLA,", 
                            "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX")
     otherFilterList<-""
     otherFilterFinal<-NULL
@@ -162,8 +145,8 @@ function(input,output,session ){
     
     ############## SELECT CONDITION  ###############"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
-    parametersSelect <-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,genetic_group,plant_stage,",
-                             "leaf_stage,type_sample,measurement,leaf_status,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
+    parametersSelect <-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,plant_stage,",
+                             "type_sample,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
                              "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
                              "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",
                              "melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucobrassicin , glucoerucin , ",
@@ -249,7 +232,7 @@ function(input,output,session ){
                      "Please retry with less specific criteria", sep="\n "))
         })
       } else {
-        allDataRes <- cbind(paramsOnlyRes[2:97],newtab[2:2152])
+        allDataRes <- cbind(paramsOnlyRes[2:93],newtab[2:2152])
         output$resText<-renderText({
           return(paste("Your filters matches ",nrow(newtab)," of 5325 spectra",sep = ""))
         })

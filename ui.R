@@ -15,7 +15,7 @@ fluidRow(useShinyjs(),
                                     
                                     fluidRow(column(width = 6, offset = 3,
                                                     wellPanel(align = "justify",class="homepage",
-                                                              HTML("<h1 align = 'center'>NirsPredict <i>1.0.0</i> </h1>"),
+                                                              HTML("<h1 align = 'center'>NirsPredict <i>1.0</i> </h1>"),
                                                               br(),
                                                               HTML("<p> NirsPredict is an application allowing to make predictions about phenotypic traits of Arabidopsis thaliana by submiting related NIRS spectra using deep-learning.
                                                               NirsPredict has three functionalities : </p>
@@ -64,17 +64,11 @@ fluidRow(useShinyjs(),
                                                                column(width=6,dateRangeInput("date",'Dates',start = '2016-01-01',format='yyyy-mm')))),
                                                                #INFOS SAMPLE###############
                                                                p(""),h4("Sample Informations"),wellPanel(fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width =6,pickerInput("genetic_group",'Genetic group',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               column(width =6,pickerInput("condition",'Condition',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("condition",'Condition',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width=6,pickerInput("leaf_stage",'Leaf Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
-                                                               ###3EME LIGNE
                                                                fluidRow(column(width = 6,radioButtons("situation","Situation",choices =list("Both","Indoor","Outdoor"))),
-                                                                        column(width = 6,radioButtons("leafAttach","Leaf Attachement",choices=list("Both","attached","detached")))),
-                                                               ###4EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("plant_stage",'Plant Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width=6,pickerInput("measurement",'Measurement',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
-                                                               ###5EME LIGNE
+                                                                        column(width =6,pickerInput("plant_stage",'Plant Stage',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               ###3EME LIGNE
                                                                fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                         column(width=6,radioButtons("nataccessions","Natural Accessions",choices=list("Included","Only","Excluded"))))),
                                                                #FORMAT##################
