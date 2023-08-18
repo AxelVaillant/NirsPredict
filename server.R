@@ -222,6 +222,11 @@ function(input,output,session ){
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser, password=dbPassword)
     incProgress(1/4, detail = paste("in progress"))
     paramsOnlyRes <- dbGetQuery(conn = con,statement = ParametersOnlyQuery)
+    for(iterator in 1:length(paramsOnlyRes[,1])){
+      if(paramsOnlyRes$reference[iterator] == "unpublished"){
+        paramsOnlyRes$genotype[iterator]<-"*****"
+      }
+    }
     write.table(paramsOnlyRes,file=paste(session$token,"/paramsOnlyRes.csv",sep=""),sep = ";",row.names = FALSE)
     write.table(newtab,file=paste(session$token,"/selectedSpectrums.csv",sep =""),sep=";",row.names = FALSE)
     #----------All Data Output----------------
@@ -665,7 +670,7 @@ function(input,output,session ){
   uploadData <- function(outputname) {
     output$DlConsult <- downloadHandler(
       filename = function() {
-        paste("SelectedSpectrums-", Sys.Date(), ".csv", sep="")
+        paste("SelectedData-", Sys.Date(), ".csv", sep="")
       },
       content = function(file) {
         file.copy(paste(session$token,"/",outputname,".csv",sep = ""),file)
