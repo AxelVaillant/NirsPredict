@@ -444,18 +444,18 @@ function(input,output,session ){
         reset('traitsfile')
         runjs('Shiny.onInputChange("traitsfile", null)')
       } else {
-        for (i in 1:(length(traits)-1)) {
-          if(!(grepl(traits[i],list))){
-            shinyalert("Error wrong header", "Headers of your file doesn't match traits name",type="error")
-            reset('traitsfile')
-            runjs('Shiny.onInputChange("traitsfile", null)')
-          } else {
+       # for (i in 1:(length(traits)-1)) {
+       #   if(!(grepl(traits[i],list))){
+       #     shinyalert("Error wrong header", "Headers of your file doesn't match traits name",type="error")
+       #     reset('traitsfile')
+       #     runjs('Shiny.onInputChange("traitsfile", null)')
+       #   } else {
             if(dir.exists(destDir)){
               result<- file.copy(traitFile$datapath,file.path(destDir,traitFile$name))
               return(TRUE)
             }  
-          }
-        }
+          #}
+        #}
       }
     }
   }
@@ -705,6 +705,8 @@ function(input,output,session ){
   isshowedTestInputs<<-FALSE;
   observeEvent(input$runMode, {
     tryCatch({
+      reset("mail")
+      disable("runAnalysis")
     if(input$runMode != "Predict traits with your own model" && isshowedTraitInput == TRUE && isshowedTestInputs == FALSE){
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
@@ -738,10 +740,11 @@ function(input,output,session ){
   
   ######### REGISTER BUTTON MANAGEMENT #################
   toListen <- reactive({
-    list(input$functionalTraits,input$metabolites)
+    list(input$functionalTraits,input$metabolites,input$runMode)
   })
   observeEvent(toListen(),{
-    if(!is.null(input$functionalTraits[1]) || !is.null(input$metabolites[1])){
+      if(!is.null(input$functionalTraits[1]) || !is.null(input$metabolites[1]) 
+         || input$runMode != "Predict traits from built-in models"){
       enable('Go')
     } else {
       disable('Go')
