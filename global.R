@@ -24,7 +24,7 @@ library(data.table)
 
 #-----Lists---------------------------------------------------------------------
 listSugar <- list("arabinose","cellobiose","fructose","fucose","galactose","glucose","inositol",
-                  "isomaltose","maltose","mannose","mannose_xylose","melbiose","melezitose","palatinose",
+                  "isomaltose","maltose","mannose","mannose_xylose","melibiose","melezitose","palatinose",
                   "raffinose","rhamnose","ribose","sucrose","trehalose","xylose")
 listHormones <- list("ABA","IAA","JA","SA","CMLX")
 listGlucosinolates<- list("x3mtp","x5mtp","x6msh","x7msh","x7mth","x8mso","x8mto","butyl",
@@ -34,7 +34,7 @@ listGlucosinolates<- list("x3mtp","x5mtp","x6msh","x7msh","x7mth","x8mso","x8mto
 listSecondaryMetabolites<- list("apigeninRutinoside","caffeicAcid","chlorogenicAcid","citrat",
                                 "cyanidinRhamnoside","cyanidinSophorosidGlucoside","dihydroCaffeoylGlucuronide","fumarat",
                                 "kaempherolGlucosylRhamnosylglucoside","kaempherolRutinoside","kaempherolXylosylRhamnoside","malat",
-                                "mCoumaricAcid","pelargonidinCumaroylDiglucoside","pelargonidinSambubioside","prenylNaringenin",
+                                "mCoumaricAcid","pCoumaricAcid","pelargonidinCumaroylDiglucoside","pelargonidinSambubioside","prenylNaringenin",
                                 "quercetinGlucoside","succinat")
 listFunctionalTraits <- list("LDMC","SLA","LNC","Thickness","RWC","LCC","Delta13C","Delta15N","Plant_lifespan","Plant_growth_rate",
                              "Csr_c","Csr_s","Csr_r")

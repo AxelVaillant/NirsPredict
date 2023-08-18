@@ -149,7 +149,7 @@ function(input,output,session ){
                              "type_sample,dateexp,CSR_C , CSR_S , CSR_R ,plant_lifespan,SLA,", 
                              "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX , ",
                              "glucose , sucrose , fructose , arabinose , cellobiose , fucose , galactose , inositol , isomaltose , maltose , mannose_xylose ,",
-                             "melezitose , melbiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucobrassicin , glucoerucin , ",
+                             "melezitose , melibiose , palatinose , raffinose , rhamnose , ribose , trehalose , xylose , glucoalysiin , glucobrassicin , glucoerucin , ",
                              "gluconapin , gluconasturtiin , glucoraphanin , glucoraphenin , epigallocatechin , progoitrin , epiprogoitrin , isobutyl , glucosinalbin ,",
                              "sinigrin , hexyl , butyl , neoglucobrassicinPeak1 , neoglucobrassicinPeak2 , X3MTP , X5MTP , X6MSH , X7MSH , X7MTH , X8MSO ,",
                              "X8MTO ,apigeninrutinoside , caffeicacid , chlorogenicacid , citrat , cyanidinRhamnoside , CyanidinSophorosidGlucoside , dihydroCaffeoylGlucuronide , ",
@@ -704,6 +704,13 @@ function(input,output,session ){
       toggle(id="inputTrait")
       isshowedTraitInput<<-FALSE;
     }
+    if(input$runMode != "Predict traits from built-in models"){
+      reset("functionalTraits")
+      reset("metabolites")
+      disable("traitInputs")
+    } else {
+      enable("traitInputs")
+    } 
     if(input$runMode == "Test your model"){
       toggle(id="inputDataTest")
       isshowedTestInputs<<-TRUE;
