@@ -44,7 +44,6 @@ fluidRow(useShinyjs(),
                                                                                      column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')))))),
                                                                  
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predict traits from built-in models",
-                                                                                                                                     #"Create new model + Predictions",
                                                                                                                                      "Predict traits with your own model","Test your model")),
                                                                                  div(id="traitInputs",pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE)))),

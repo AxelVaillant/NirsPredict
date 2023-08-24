@@ -48,22 +48,18 @@ function(input,output,session ){
     inputNameList<- list("exp_location","idexp","reference","genotype","conditionexp",
                          "plant_stage","treatment","CSR","sugar",
                          "glucosinolates","secondary_metabolites")
-    selectquery<-""
+
     filterList<-""
     #-Assign each input a corresponding variable
     for(i in 1:length(inputList)){
       if(!is.null(inputList[i][[1]])){
         filterList<-c(filterList,inputNameList[i])
-        selectquery<- paste(selectquery,inputNameList[i],",")
-        assign(paste("whereQuery",inputNameList[i],sep=""),inputList[i])
-        
       }
     }
-    selectquery<-substr(selectquery,1,nchar(selectquery)-2)
-    ##################### QUERY BUILDING ##############################
+   ##################### QUERY BUILDING ##############################
     ############ "WHERE" QUERY BUILDING #############
     filterList1<-""
-    for(i in 1:10){
+    for(i in 1:7){
       paramList<-""
       if(!is.null(inputList[i][[1]])){
         for(j in 1:length(inputList[[i]])){
@@ -125,7 +121,7 @@ function(input,output,session ){
                            "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX")
     otherFilterList<-""
     otherFilterFinal<-NULL
-    for(i in 11:14){
+    for(i in 8:11){
       otherFilterList<-""
       if(!is.null(inputList[i][[1]])){
         for(j in 1:length(inputList[[i]])){
@@ -142,7 +138,6 @@ function(input,output,session ){
     } else {
       customSelect<-basicParameters
     }
-    
     ############## SELECT CONDITION  ###############"
     spectrumselect<-"individual_id,wavelength_id,absorption,identification"
     parametersSelect <-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,plant_stage,",
@@ -375,7 +370,6 @@ function(input,output,session ){
     #-Selected pca plot-#
     output$selectedPCAPlot <- renderPlot({
       newtab<-read.table(file=paste(session$token,"/selectedSpectrums.csv",sep =""),header = TRUE,sep = ";")
-      params<-read.table(file=paste(session$token,"/paramsOnlyRes.csv",sep=""),header=TRUE,sep=";")
       if(!is.na(newtab[1,1])){
         SelectedDataPca<-PCA(newtab[,2:2152],scale.unit = TRUE,ncp=5,graph=FALSE)
         fviz_pca_ind(SelectedDataPca,label="none",col.ind = "green",addEllipses = TRUE,legend.title="Groups")+scale_shape_manual(values=c(0,1,2,3,4,5,6,7,9,10))+xlim(-100, 300)+ggtitle("Selected spectra PCA")
@@ -429,12 +423,12 @@ function(input,output,session ){
   }
   ###########-TRAIT FILE CHECKING-###########
   traitUploadCheck<-function(traitFile,destDir){
-    traits <- c(input$functionalTraits,input$metabolites)
-    possibleTraits <- c(listFunctionalTraits,listSecondaryMetabolites,listHormones)
-    list=""
-    for(i in 1:length(possibleTraits)){
-      list<-paste(list,possibleTraits[i],sep=" ")
-    }
+    #traits <- c(input$functionalTraits,input$metabolites)
+    #possibleTraits <- c(listFunctionalTraits,listSecondaryMetabolites,listHormones)
+    #list=""
+    #for(i in 1:length(possibleTraits)){
+    #  list<-paste(list,possibleTraits[i],sep=" ")
+    #}
     if(is.null(traitFile)){
       shinyalert("Input missing", "No trait file has been provided", type="error")
     } else {
@@ -495,7 +489,6 @@ function(input,output,session ){
     mail <- get(paste(session$token,"-","mail",sep=""))
     
     if(isTRUE(globalUploadCheck(inFile,traitFile,testSpectrumFile,testTraitFile,destDir))){
-      #system(paste("Rscript --vanilla runJob.R",email_user),wait = FALSE)
       shinyalert("Run started","You will receive an email when the job is complete",type="success")
       ##-MODE 1-##    
       if(input$runMode == "Predict traits from built-in models"){
@@ -540,42 +533,9 @@ function(input,output,session ){
             })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
               return(NA)})
               })
-          } else if (input$runMode == "Create new model + Predictions"){
-            tryCatch({
-              future({
-              #----------Connect to GPU----------------
-              sessionGpu<-ssh_connect(ipGpu,passwd = passwordGpu)
-              print(sessionGpu)
-              #-----------Transfer spectrum file-------
-              ssh_exec_wait(sessionGpu, command = c(
-                "cd /home/vaillant/Documents/pyNirs",
-                paste("mkdir ",session$token,sep = ""),
-                paste("mkdir ",session$token,"/Res",sep = ""),
-                paste("mkdir ",session$token,"/Temp",sep = "")
-              ))
-              file.path<-inFile$datapath
-              scp_upload(sessionGpu,file.path,to=paste("/home/vaillant/Documents/pyNirs/",session$token,sep = ""))
-              ssh_exec_wait(sessionGpu,paste("mv /home/vaillant/Documents/pyNirs/",session$token,"/0.csv /home/vaillant/Documents/pyNirs/",session$token,"/Xcal.csv",sep=""))
-              #-----------Execute python script--------
-              outBash<-ssh_exec_internal(sessionGpu,paste("bash /home/vaillant/Documents/pyNirs/setup.sh 2 ",session$token,sep=""))
-              outErr<-rawToChar(outBash$stderr)
-              if(grepl("out of memory",outErr)){
-                stop("Error : Out of memory error")
-              }
-              #-----------Get output files------------ --
-              path<-paste("/home/vaillant/Documents/pyNirs/",session$token,"/Res",sep="")
-              scp_download(sessionGpu,path, to = session$token)
-              ssh_exec_internal(sessionGpu,paste("rm -Rf /home/vaillant/Documents/pyNirs/",session$token,sep=""))
-              #-----------Send results by email-------#
-              system(paste("Rscript --vanilla sendResults.R",mail,session$token),wait = FALSE)
-              #-----------Disconnect-----------------
-              ssh_disconnect(sessionGpu)
-            })%...!% (error=function(error_message){shinyalert("Error", "Unexpected error",type="error")
-              return(NA)})
-              }) 
-            ##-MODE 2-##  
-            } else if (input$runMode == "Predict traits with your own model"){
-            tryCatch({
+         ##-MODE 2-## 
+          } else if (input$runMode == "Predict traits with your own model"){
+             tryCatch({
             future({
               #----------Connect to GPU----------------
               sessionGpu<-ssh_connect(ipGpu,passwd = passwordGpu)
