@@ -44,7 +44,7 @@ fluidRow(useShinyjs(),
                                                                                      column(width=6,(fileInput('testTraitsFile','Upload Test Traits CSV File',accept = c('text/csv','text/comma-separated-values','text/plain','.csv')))))),
                                                                  
                                                                  fluidRow(column(width=6,radioButtons("runMode","Mode",choices =list("Predict traits from built-in models",
-                                                                                                                                     "Predict traits with your own model","Test your model")),
+                                                                                                                                     "Predict traits with your own model","External validation")),
                                                                                  div(id="traitInputs",pickerInput("functionalTraits","Functional traits",multiple=TRUE,choices=listFunctionalTraits,options = list(`actions-box` = TRUE)),
                                                                           pickerInput("metabolites","Metabolites",multiple=TRUE,choices=list(Hormones=listHormones,Sugars=listSugar,Glucosinolates=listGlucosinolates,Secondary_Metabolites=listSecondaryMetabolites),options = list(`actions-box` = TRUE)))),
                                                                           column(width = 6,HTML(paste('<br>',p("The prediction's robustness and the number of input to provide will rely on the selected mode.")),
@@ -56,11 +56,11 @@ fluidRow(useShinyjs(),
                                                       ),
                                                       tabPanel("Explore Database",column(width =4,
                                                                #INFOS GENERAL###############
-                                                               p(""),p("Visualize and download data from the database build from Vasseur et al. (2022)"),h4("General Informations"),wellPanel(fluidRow(column(width =6, pickerInput("location",'Location',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
+                                                               p(""),HTML("<p>Visualize and download data from the database built from <a href=https://doi.org/10.3389/fpls.2022.836488>Vasseur et al. (2022)</a></p>"),h4("General Informations"),
+                                                               wellPanel(fluidRow(column(width =6,pickerInput("exp",'Experimentation',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
+                                                               column(width =6,pickerInput("reference",'Reference',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
                                                                ###2EME LIGNE
-                                                               fluidRow(column(width =6,pickerInput("reference",'Reference',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
-                                                               column(width=6,dateRangeInput("date",'Dates',start = '2016-01-01',format='yyyy-mm')))),
+                                                               fluidRow(column(width=6,dateRangeInput("date",'Dates',start = '2016-01-01',format='yyyy-mm')))),
                                                                #INFOS SAMPLE###############
                                                                p(""),h4("Sample Informations"),wellPanel(fluidRow(column(width =6, pickerInput("genotype",'Genotype',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                column(width =6,pickerInput("condition",'Condition',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE)))),
@@ -71,15 +71,19 @@ fluidRow(useShinyjs(),
                                                                fluidRow(column(width =6,pickerInput("treatment",'Treatment',multiple=TRUE,choices=NULL,options = list(`actions-box` = TRUE))),
                                                                         column(width=6,radioButtons("nataccessions","Natural Accessions",choices=list("Included","Only","Excluded"))))),
                                                                #FORMAT##################
-                                                               p(""),h4("Output"),p("Choose query output format"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectra only","Phenotypic traits only","Custom"))),
+                                                               p(""),h4("Output"),p("Choose query output format"),wellPanel(fluidRow(column(width=6,radioButtons("outputformat","Output format",choices = list("All Data","Spectra only","Functional traits only","Additional traits"))),
                                                                                            column(width=6,actionButton("submit","Submit",icon("paper-plane"),style="color: #fff; background-color: #337ab7; border-color: #2e6da4"))),
                                                                                            fluidRow(span(verbatimTextOutput('resText'),style="color:red;text-align:center;"),shinyjs::hidden(downloadButton('DlConsult', label="Download")))),
-                                                               #CUSTOM OPTIONS#############
-                                                               p(""),shinyjs::hidden(div(id="customoptions",h4("Custom Options"),p("Customize the features present in the provided dataset"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
+                                                               #ADDITIONAL TRAITS OPTIONS#############
+                                                               p(""),shinyjs::hidden(div(id="customoptions",h4("Additional traits"),p("Customize the features present in the provided dataset"),wellPanel(fluidRow(column(width =6, pickerInput("CSR",'CSR',multiple=TRUE,choices=list("CSR_S","CSR_C","CSR_R"),options = list(`actions-box` = TRUE))),
                                                                                                                              column(width =6,pickerInput("sugar",'Sugars',multiple=TRUE,choices=listSugar,options = list(`actions-box` = TRUE)))),
                                                                                                                     ##2EME LIGNE
                                                                                                                     fluidRow(column(width =6,pickerInput("glucosinolates",'Glucosinolates',multiple=TRUE,choices=listGlucosinolates,options = list(`actions-box` = TRUE)))
-                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE)))))))),
+                                                                                                                             ,column(width =6,pickerInput("secondary_metabolites",'Secondary Metabolites',multiple=TRUE,choices=listSecondaryMetabolites,options = list(`actions-box` = TRUE))))))),
+                                                               ###COMPLETE PREDICTION FILE
+                                                               p(""),h4("Complete predictions dataset"),wellPanel(fluidRow(column(width=10,HTML("<div align = 'justify';display='inline'><p>We have used the application to predict values for every traits and from every spectra contained in the database.</p>\n
+                                                                                                       <p>All known values have been replaced by predicted values to make a complete predicted dataset.</p></div>"),downloadButton('fullPred', label="Download complete predictions file",style='font-size:85%;'))))),
+                                                               
                                                                shinyjs::hidden(div(id="plotsOutput",column(width=8,column(width=11,withSpinner(plotOutput('MeanPlot',height=600)),
                                                                column(width=6,shinyjs::hidden(img(src = "AllSpectraPCA.png",height="105%",width="105%",id="imgPCA"))),
                                                               column(width=6,withSpinner(plotOutput('selectedPCAPlot',height =500)))))))),
@@ -96,6 +100,7 @@ fluidRow(useShinyjs(),
                                                                             HTML("<p align = 'center'>NirsPredict is a tool allowing to make deep-learning predictions about phenotypic traits of A. thaliana by submiting related NIRS spectra</p>"),
                                                                             HTML("<p align = 'center'>'A Perspective on Plant Phenomics: Coupling Deep Learning and Near-Infrared Spectroscopy' - <a href=https://doi.org/10.3389/fpls.2022.836488>Vasseur et al.</a></p>"),
                                                                             HTML("<p align = 'center'>You can contact us on this email adress : NirsPredict@post.com </p>"),
+                                                                            HTML(paste0("<p align='center'>","<b>","How to cite: ","</b>","Comming soon","</p>")),
                                                                             HTML("<p align = 'center'><img src = 'cefe.png' width = '150px' height = 'auto'><img src = 'cnrs.png' width = '150px' height = 'auto'><img src = 'institutAgro.png' width = '150px' height = 'auto'>
                                                                                  <img src = 'cirad.png' width = '150px' height = 'auto'><img src = 'univMtp.svg' width = '150px' height = 'auto'><img src = 'inrae.png' width = '150px' height = 'auto'>
                                                                                  <img src = 'ird.png' width = '150px' height = 'auto'><img src = 'ephe.png' width = '150px' height = 'auto'></p>"))))))

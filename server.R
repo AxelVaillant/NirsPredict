@@ -21,13 +21,23 @@ function(input,output,session ){
       # Connect to the database
       con <- dbConnect(RPostgres::Postgres(), dbname = "NirsDB", host=dbHost, port=dbPort, user=dbUser,password=dbPassword)
       
-      listParams <- list("exp_location","idexp","reference","conditionexp","genotype","plant_stage","treatment")
+      listParams <- list("idexp","reference","conditionexp","genotype","plant_stage","treatment")
       for( i in listParams){
-        query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL ORDER BY ",i)
+        #####-Hide all genotypes involved in unpublished data
+        if(i=="genotype"){
+          query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," NOT in ('An-1','Co-1','Coa-0','Eden-1',
+          'Faneronemi-3','Gua-1','Hum-2','Kil-0','Kni-1','Kolyv-2','Kulturen-1','Ler-0','Mitterberg-2-185','Or-1',
+															  'Orast-1','Rev-0','San-2','Stw-0','UKSE06-362','Utrecht','Vdm-0') ORDER BY ",i)
+        #####-Order unpublished in first
+        } else if(i=="reference"){
+          query <- paste("SELECT reference FROM (SELECT DISTINCT reference FROM individual) individual
+                          ORDER BY CASE WHEN reference ='unpublished' then 1 ELSE 2 END")
+        }  else {
+          query <- paste("SELECT DISTINCT ",i," FROM individual WHERE ",i," IS NOT NULL ORDER BY ",i)
+        }
         assign(paste("SqlOutput",i,sep=""),dbGetQuery(con, query))
       }
       
-      updatePickerInput(session, "location", choices = SqlOutputexp_location)
       updatePickerInput(session, "exp", choices = SqlOutputidexp)
       updatePickerInput(session, "reference", choices = SqlOutputreference)
       updatePickerInput(session, "genotype", choices = SqlOutputgenotype)
@@ -85,7 +95,7 @@ function(input,output,session ){
     endDate<-input$date[2]
     dateParam<-paste(" dateexp BETWEEN '",startDate,"' and '",endDate,"'",sep="")
     filterListFinal<-paste(c(filterList1,dateParam),collapse=" and ")
-    #-SITUATION/NATURAL_ACCESSIOONS-#
+    #-SITUATION/NATURAL_ACCESSIONS-#
     situation<-NULL
     nataccessions<-NULL
     if((!input$situation == "Both") ||  (!input$nataccessions == "Included")){
@@ -115,7 +125,7 @@ function(input,output,session ){
       filterListFinal<-paste("WHERE",filterListFinal)
     }
     
-    ############ PARAMETERS FILTER (PHENOTYPIC TRAITS ONLY CASE) ###############
+    ############ PARAMETERS FILTER (FUNCTIONAL TRAITS ONLY CASE) ###############
     basicParameters<-paste("individual_id,identification,idexp,reference,indout,exp_location,conditionexp,treatment,genotype,plant_stage,",
                            "type_sample,dateexp,plant_lifespan ,SLA,", 
                            "LDMC , delta13C , delta15N , LCC , thickness , plant_growth_rate , RWC , LNC , SA , JA , IAA , ABA , CMLX")
@@ -131,7 +141,7 @@ function(input,output,session ){
         otherFilterFinal<-paste(otherFilterFinal,otherFilterList,sep = "")
       }
     }
-     #-CUSTOM SELECTION CASE-#
+     #-ADDITIONAL TRAITS SELECTION CASE-#
     if(!is.null(otherFilterFinal)){
       otherFilterFinal<-substr(otherFilterFinal,1,nchar(otherFilterFinal)-1)
       customSelect<-paste(basicParameters,",",otherFilterFinal,sep = "")
@@ -256,8 +266,8 @@ function(input,output,session ){
       shinyjs::show("DlConsult")
       uploadData("selectedSpectrums")
     }
-    #---------All Phenotypic traits only Output-------
-    if(input$outputformat=="Phenotypic traits only"){
+    #---------All Functional traits only Output-------
+    if(input$outputformat=="Functional traits only"){
       if(is.na(paramsOnlyRes[1,1])){
         output$resText<-renderText({
           HTML(paste("Your filters don't match any spectra in the database.",
@@ -272,8 +282,8 @@ function(input,output,session ){
       uploadData("paramsOnlyRes")
     }
     
-    #------------Custom Ouput-----------
-    if(input$outputformat=="Custom"){
+    #------------Additional traits Ouput-----------
+    if(input$outputformat=="Additional traits"){
       customRes <- dbGetQuery(conn = con,statement = CustomQuery)
       if(is.na(customRes[1,1])){
         output$resText<-renderText({
@@ -412,7 +422,7 @@ function(input,output,session ){
         if(isTRUE(traitUploadCheck(traitFile,destDir))){
           return(TRUE)
         }
-      } else if (input$runMode == "Test your model"){
+      } else if (input$runMode == "External validation"){
         if(isTRUE(traitUploadCheck(testTraitFile,destDir)) && isTRUE(spectrumUploadCheck(testSpectrumFile,destDir))){
           return(TRUE)
         }
@@ -575,7 +585,7 @@ function(input,output,session ){
               return(NA)})
               })
               ##-MODE 3-##  
-            } else if (input$runMode == "Test your model"){
+            } else if (input$runMode == "External validation"){
               tryCatch({
                 future({
                   #----------Connect to GPU----------------
@@ -638,23 +648,31 @@ function(input,output,session ){
     )
   }
   ########################################
-  ##### APPLICATION MANUAL DOWNLOAD ######
+  ####### FILES DOWNLOAD ########
+  #-APPLICATION MANUAL-#
     output$manual <- downloadHandler(
       filename = "Manual.pdf",
       content = function(file) {
         file.copy("Manual.pdf",file)
       }
     )
+  #-COMPLETE PREDICTIONS FILE-#
+  output$fullPred <- downloadHandler(
+    filename = "fullpred.csv",
+    content = function(file) {
+      file.copy("fullpred.csv",file)
+    }
+  )
   ########################################
-  ##### CUSTOM OPTIONS TOGGLE BUTTON #####
+  ##### ADDITIONAL TRAITS OPTIONS TOGGLE BUTTON #####
   isshowed<<-FALSE;
   observeEvent(input$outputformat, {
-    if(input$outputformat == "Custom"){
+    if(input$outputformat == "Additional traits"){
       toggle(id="customoptions")
       isshowed<<-TRUE;
       shinyjs::runjs("window.scrollTo(0, 2000)")
     }
-    if(input$outputformat != "Custom" && isshowed == TRUE){
+    if(input$outputformat != "Additional traits" && isshowed == TRUE){
       toggle(id="customoptions")
       isshowed<<-FALSE;
     }
@@ -678,13 +696,13 @@ function(input,output,session ){
     } else {
       enable("traitInputs")
     } 
-    if(input$runMode == "Test your model"){
+    if(input$runMode == "External validation"){
       toggle(id="inputDataTest")
       isshowedTestInputs<<-TRUE;
       toggle(id="inputTrait")
       isshowedTraitInput<<-TRUE;
     }
-    if(input$runMode != "Test your model" && isshowedTestInputs == TRUE && isshowedTraitInput == TRUE ){
+    if(input$runMode != "External validation" && isshowedTestInputs == TRUE && isshowedTraitInput == TRUE ){
       toggle(id="inputDataTest")
       isshowedTestInputs<<-FALSE;
       toggle(id="inputTrait")
@@ -697,7 +715,17 @@ function(input,output,session ){
     },error=function(err){showNotification("Error",type="error")
       return(NA)})
   })
-  
+  ######### DISABLE GENOTYPE INPUT WHEN NATURAL ACCESSIONS ONLY ################
+#  observeEvent(input$nataccessions, {
+#    tryCatch({
+#    if(input$nataccessions=="Only"){
+#      reset('genotype')
+#      disable('genotype')
+#    } else {
+#      enable('genotype')
+#    }
+#    })
+#  })
   ######### REGISTER BUTTON MANAGEMENT #################
   toListen <- reactive({
     list(input$functionalTraits,input$metabolites,input$runMode)
