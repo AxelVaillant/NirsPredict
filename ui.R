@@ -32,7 +32,7 @@ fluidRow(useShinyjs(),
                            tabPanel("Application", value="app",
                                     fluidPage(
                                       
-                                      fluidRow(column(width=1,p("NirsPredict Application")),column(width=1,downloadButton('manual', label="Download application manual",style='padding:4px; font-size:80%;'))),
+                                      fluidRow(column(width=1,p("NirsPredict Application")),column(width=1,downloadButton('manual', label="Download application manual",style='padding:4px; font-size:80%')),column(width=1,downloadButton('metadata', label="Download metadata guide",style='padding:4px; font-size:80%;;margin-left:75px'))),
                                       fluidRow(
                                                       tabsetPanel(
                                                         tabPanel("Predict trait",column(width =4,

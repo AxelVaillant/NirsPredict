@@ -663,6 +663,13 @@ function(input,output,session ){
       file.copy("fullpred.csv",file)
     }
   )
+  #-METADATA GUIDE FILE-#
+  output$metadata <- downloadHandler(
+    filename = "metadata_guide.pdf",
+    content = function(file) {
+      file.copy("metadata_guide.pdf",file)
+    }
+  )
   ########################################
   ##### ADDITIONAL TRAITS OPTIONS TOGGLE BUTTON #####
   isshowed<<-FALSE;
@@ -716,16 +723,17 @@ function(input,output,session ){
       return(NA)})
   })
   ######### DISABLE GENOTYPE INPUT WHEN NATURAL ACCESSIONS ONLY ################
-#  observeEvent(input$nataccessions, {
-#    tryCatch({
-#    if(input$nataccessions=="Only"){
-#      reset('genotype')
-#      disable('genotype')
-#    } else {
-#      enable('genotype')
-#    }
-#    })
-#  })
+  observeEvent(input$nataccessions, {
+    tryCatch({
+    if(input$nataccessions=="Only"){
+      reset('genotype')
+      disable('genotype')
+    } else {
+      reset('genotype')
+      enable('genotype')
+    }
+    })
+  })
   ######### REGISTER BUTTON MANAGEMENT #################
   toListen <- reactive({
     list(input$functionalTraits,input$metabolites,input$runMode)
