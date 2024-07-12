@@ -3,6 +3,8 @@ NirsPredict is a Shiny application, built using the Shiny R package that allow u
 <br/>
 (see <a href=https://doi.org/10.3389/fpls.2022.836488>Vasseur et al.</a>).
 
+https://shiny.cefe.cnrs.fr/NirsPredict/
+
 # Dependencies
 Apart from base and shiny packages dependencies, NirsPredict depends on the followings packages :
 RPostgreSQL, RPostgres, ggplot2, FactoMineR, factoextra, ade4, shinyjs, ssh, httr, jsonlite, future,
